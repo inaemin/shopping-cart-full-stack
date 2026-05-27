@@ -55,6 +55,7 @@ export default tseslint.config(
 
       // 축약 이름 제한 예시
       "id-denylist": [
+        "error",
         "req",
         "res",
         "ctx",
@@ -114,6 +115,14 @@ export default tseslint.config(
           ],
         },
       ],
+    },
+  },
+
+  {
+    files: ["src/middlewares/**/*.ts"],
+    rules: {
+      "max-params": "off",
+      "max-lines-per-function": "off",
     },
   },
 

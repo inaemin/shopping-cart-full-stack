@@ -18,8 +18,7 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
     "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:ci",
-    "prepare": "husky"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:ci"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,cjs}": [
@@ -47,6 +46,8 @@
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
     "jest": "^30.4.2",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.8.3",
     "supertest": "^7.2.2",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"

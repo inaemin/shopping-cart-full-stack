@@ -6,7 +6,7 @@
 | 상품 추가          | POST   | /products     | 201       |
 | 상품 제거          | DELETE | /products/:id | 204       |
 | 장바구니 목록 조회 | GET    | /cart         | 200, 204  |
-| 장바구니 수량 변경 | PATCH  | /cart         | 204       |
+| 장바구니 수량 변경 | PATCH  | /cart/:id     | 204       |
 | 장바구니 상품 제거 | DELETE | /cart/:id     | 204       |
 
 ## 공통

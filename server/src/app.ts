@@ -1,6 +1,6 @@
 import express from "express";
 import { createProduct, deleteProduct, getProducts } from "./controllers/products.controller.js";
-import { getCartItems } from "./controllers/cart.controller.js";
+import { getCartItems, updateCartItemQuantity } from "./controllers/cart.controller.js";
 import errorHandler from "./middlewares/errorHandler.js";
 
 const app = express();
@@ -11,7 +11,7 @@ app.post("/products", createProduct);
 app.delete("/products/:id", deleteProduct);
 
 app.get("/cart", getCartItems);
-app.patch("/cart", () => {});
+app.patch("/cart/:id", updateCartItemQuantity);
 app.delete("/cart/:id", () => {});
 
 app.use(errorHandler);

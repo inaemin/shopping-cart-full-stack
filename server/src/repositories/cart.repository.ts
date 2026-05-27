@@ -2,8 +2,8 @@ import { CartItem, newCartItem } from "../../interfaces/cart.interface.js";
 
 const cartItems: CartItem[] = [];
 
-export function isAlreadyExist(productId: number) {
-  if (cartItems.find((item) => item.productId === productId)) return true;
+export function isAlreadyExist(id: number) {
+  if (cartItems.find((item) => item.id === id)) return true;
   return false;
 }
 

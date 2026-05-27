@@ -38,6 +38,11 @@ export const ERROR_RESPONSE = {
     message: "요청 데이터가 올바르지 않습니다.",
   },
 
+  PRODUCT_NOT_FOUND: {
+    code: "PRODUCT_NOT_FOUND",
+    message: "요청한 상품을 찾을 수 없습니다.",
+  },
+
   INTERNAL_SERVER_ERROR: {
     code: "INTERNAL_SERVER_ERROR",
     message: "서버 내부 오류가 발생했습니다.",

@@ -12,3 +12,7 @@ export function save(product: newProduct) {
 
   products.push(newProduct);
 }
+
+export function findAll() {
+  return [...products];
+}

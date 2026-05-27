@@ -16,3 +16,16 @@ export function save(product: newProduct) {
 export function findAll() {
   return [...products];
 }
+
+export function deleteById(id: number): boolean {
+  const index = products.findIndex((product) => product.id === id);
+  if (index === -1) {
+    return false;
+  }
+  products.splice(index, 1);
+  return true;
+}
+
+export function reset() {
+  products.length = 0;
+}

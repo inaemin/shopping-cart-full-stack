@@ -1,9 +1,17 @@
+import cors from "cors";
 import express from "express";
 import { createProduct, deleteProduct, getProducts } from "./controllers/products.controller.js";
 import { getCartItems, updateCartItemQuantity, deleteCartItem } from "./controllers/cart.controller.js";
 import errorHandler from "./middlewares/errorHandler.js";
 
 const app = express();
+app.use(
+  cors({
+    origin: [/\.github\.io$/, "http://localhost:5173"],
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 app.get("/products", getProducts);

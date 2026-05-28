@@ -25,6 +25,12 @@ export function deleteById(id: number) {
   return true;
 }
 
+export function deleteByProductId(productId: number) {
+  const index = cartItems.findIndex((item) => item.productId === productId);
+  cartItems.splice(index, 1);
+  return true;
+}
+
 export function findAll(): CartItem[] {
   return [...cartItems];
 }

@@ -53,6 +53,19 @@ describe("PATCH /cart/:id", () => {
     });
   });
 
+  it("장바구니 상품이 삭제된 상품이면 404 Not Found를 반환한다.", async () => {
+    saveNewItem({ productId: 1, quantity: 1 });
+    const { body: cartItems } = await request(app).get("/cart").expect(200);
+    const id = cartItems[0].id;
+
+    const response = await request(app).patch(`/cart/${id}`).send({ quantity: 2 });
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      code: "PRODUCT_NOT_FOUND",
+      message: "요청한 상품을 찾을 수 없습니다.",
+    });
+  });
+
   it.each([
     ["quantity가 없으면", { quantity: undefined }, "REQUIRED_CART_ITEM_QUANTITY"],
     ["quantity가 숫자가 아니면", { quantity: "abc" }, "REQUIRED_CART_ITEM_QUANTITY"],

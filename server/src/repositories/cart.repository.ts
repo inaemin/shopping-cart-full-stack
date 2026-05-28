@@ -19,6 +19,12 @@ export function updateItemQuantity(cartItem: newCartItem) {
   }
 }
 
+export function deleteById(id: number) {
+  const index = cartItems.findIndex((item) => item.id === id);
+  cartItems.splice(index, 1);
+  return true;
+}
+
 export function findAll(): CartItem[] {
   return [...cartItems];
 }

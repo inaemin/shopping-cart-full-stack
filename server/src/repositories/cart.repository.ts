@@ -27,12 +27,22 @@ export function deleteById(id: number) {
 
 export function deleteByProductId(productId: number) {
   const index = cartItems.findIndex((item) => item.productId === productId);
-  cartItems.splice(index, 1);
+  if (index !== -1) {
+    cartItems.splice(index, 1);
+  }
   return true;
 }
 
 export function findAll(): CartItem[] {
   return [...cartItems];
+}
+
+export function findProductIdById(id: number) {
+  const index = cartItems.find((item) => item.id === id);
+  if (index) {
+    return index.productId;
+  }
+  return -1;
 }
 
 export function reset() {

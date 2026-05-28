@@ -22,6 +22,14 @@ export function findAll() {
   return [...products];
 }
 
+export function findStockById(id: number) {
+  const product = products.find((product) => product.id === id);
+  if (product) {
+    return product.stock;
+  }
+  return -1;
+}
+
 export function deleteById(id: number): boolean {
   const index = products.findIndex((product) => product.id === id);
   products.splice(index, 1);

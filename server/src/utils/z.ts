@@ -1,53 +1,82 @@
-/* eslint-disable */
+type Rule<T> = (val: T) => string | null;
+
+function throwIfInvalid<T>(rules: Array<Rule<T>>, val: T): void {
+  const error = rules.map((rule) => rule(val)).find((result): result is string => result !== null);
+  if (error !== undefined) {
+    throw new ZodError([{ message: error }]);
+  }
+}
+
 class StringSchema {
-  private rules: Array<(val: string) => string | null> = [];
-  min(n: number, msg?: string): StringSchema {
-    this.rules.push((val) => (val.length >= n ? null : (msg ?? "too short")));
+  private rules: Array<Rule<string>> = [];
+
+  public min(n: number, message?: string): StringSchema {
+    this.rules.push((val) => {
+      if (val.length >= n) {
+        return null;
+      }
+      return message ?? "too short";
+    });
     return this;
   }
-  max(n: number, msg?: string): StringSchema {
-    this.rules.push((val) => (val.length <= n ? null : (msg ?? "too long")));
+
+  public max(n: number, message?: string): StringSchema {
+    this.rules.push((val) => {
+      if (val.length <= n) {
+        return null;
+      }
+      return message ?? "too long";
+    });
     return this;
   }
-  parse(val: unknown): string {
+
+  public parse(val: unknown): string {
     if (typeof val !== "string") {
       throw new ZodError([{ message: "Not a string" }]);
     }
-    for (const rule of this.rules) {
-      const error = rule(val);
-      if (error !== null) {
-        throw new ZodError([{ message: error }]);
-      }
-    }
+    throwIfInvalid(this.rules, val);
     return val;
   }
 }
 
 class NumberSchema {
-  private rules: Array<(val: number) => string | null> = [];
+  private rules: Array<Rule<number>> = [];
 
-  min(n: number, msg?: string): NumberSchema {
-    this.rules.push((val) => (val >= n ? null : (msg ?? "too small")));
+  public min(n: number, message?: string): NumberSchema {
+    this.rules.push((val) => {
+      if (val >= n) {
+        return null;
+      }
+      return message ?? "too small";
+    });
     return this;
   }
-  int(msg?: string): NumberSchema {
-    this.rules.push((val) => (Number.isInteger(val) ? null : (msg ?? "not an integar")));
+
+  public int(message?: string): NumberSchema {
+    this.rules.push((val) => {
+      if (Number.isInteger(val)) {
+        return null;
+      }
+      return message ?? "not an integar";
+    });
     return this;
   }
-  positive(msg?: string): NumberSchema {
-    this.rules.push((val) => (val > 0 ? null : (msg ?? "not a positive")));
+
+  public positive(message?: string): NumberSchema {
+    this.rules.push((val) => {
+      if (val > 0) {
+        return null;
+      }
+      return message ?? "not a positive";
+    });
     return this;
   }
-  parse(val: unknown): number {
+
+  public parse(val: unknown): number {
     if (typeof val !== "number") {
       throw new ZodError([{ message: "Not a number" }]);
     }
-    for (const rule of this.rules) {
-      const error = rule(val);
-      if (error !== null) {
-        throw new ZodError([{ message: error }]);
-      }
-    }
+    throwIfInvalid(this.rules, val);
     return val;
   }
 }
@@ -55,7 +84,7 @@ class NumberSchema {
 class ObjectSchema {
   constructor(private shape: Record<string, { parse: (val: unknown) => unknown }>) {}
 
-  parse(val: unknown) {
+  public parse(val: unknown) {
     if (typeof val !== "object" || val === null) {
       throw new ZodError([{ message: "Not an object" }]);
     }
@@ -70,7 +99,7 @@ class ObjectSchema {
 class ArraySchema {
   constructor(private schema: { parse: (val: unknown) => unknown }) {}
 
-  parse(val: unknown) {
+  public parse(val: unknown) {
     if (!Array.isArray(val)) {
       throw new ZodError([{ message: "Not an Array" }]);
     }
@@ -83,7 +112,7 @@ class ArraySchema {
 }
 
 export class ZodError extends Error {
-  issues: Array<{ message: string }>;
+  public issues: Array<{ message: string }>;
 
   constructor(issues: Array<{ message: string }>) {
     super("Validation failed");

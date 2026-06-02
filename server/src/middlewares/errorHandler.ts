@@ -1,5 +1,5 @@
 import { ErrorRequestHandler } from "express";
-import { ZodError } from "zod";
+import { ZodError } from "../utils/z.js";
 import { ERROR_RESPONSE } from "../constants/error.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

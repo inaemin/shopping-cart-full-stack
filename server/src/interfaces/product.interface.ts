@@ -1,4 +1,4 @@
-import * as z from "zod";
+import * as z from "../utils/z.js";
 import { createProductRequestSchema } from "../schemas/product.schema.js";
 
 export type CreateProductDto = z.infer<typeof createProductRequestSchema>;

@@ -1,4 +1,4 @@
-import * as z from "zod";
+import * as z from "../utils/z.js";
 import { updateCartItemRequestSchema } from "../schemas/cart.schema.js";
 
 export type UpdateCartItemDto = z.infer<typeof updateCartItemRequestSchema>;

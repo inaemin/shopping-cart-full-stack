@@ -1,4 +1,4 @@
-import * as z from "zod";
+import { z } from "../utils/z.js";
 import { ERROR_RESPONSE } from "../constants/error.js";
 
 export const createProductRequestSchema = z.object({

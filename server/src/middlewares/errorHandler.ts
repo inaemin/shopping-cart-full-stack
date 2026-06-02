@@ -1,5 +1,6 @@
 import { ErrorRequestHandler } from "express";
 import { ZodError } from "../utils/z.js";
+import { AppError } from "../errors/AppError.js";
 import { ERROR_RESPONSE } from "../constants/error.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -7,6 +8,11 @@ const errorHandler: ErrorRequestHandler = (error, _request, response, next) => {
   if (error instanceof ZodError) {
     const errorCode = error.issues[0]?.message as keyof typeof ERROR_RESPONSE;
     response.status(400).json(ERROR_RESPONSE[errorCode]);
+    return;
+  }
+
+  if (error instanceof AppError) {
+    response.status(error.status).json(ERROR_RESPONSE[error.code]);
     return;
   }
 

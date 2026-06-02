@@ -38,6 +38,16 @@ export const ERROR_RESPONSE = {
     message: "요청 데이터가 올바르지 않습니다.",
   },
 
+  INVALID_PRODUCT_ID: {
+    code: "INVALID_PRODUCT_ID",
+    message: "상품 ID는 숫자여야 합니다.",
+  },
+
+  INVALID_CART_ITEM_ID: {
+    code: "INVALID_CART_ITEM_ID",
+    message: "장바구니 상품 ID는 숫자여야 합니다.",
+  },
+
   PRODUCT_NOT_FOUND: {
     code: "PRODUCT_NOT_FOUND",
     message: "요청한 상품을 찾을 수 없습니다.",

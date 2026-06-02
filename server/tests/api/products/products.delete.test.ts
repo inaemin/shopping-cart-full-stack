@@ -1,7 +1,7 @@
 import request from "supertest";
-import app from "../../src/app.js";
-import { reset } from "../../src/repositories/products.repository.js";
-import { reset as resetCart, saveNewItem } from "../../src/repositories/cart.repository.js";
+import app from "../../../src/app.js";
+import { reset } from "../../../src/repositories/products.repository.js";
+import { reset as resetCart, saveNewItem } from "../../../src/repositories/cart.repository.js";
 
 const validProduct = {
   name: "콜라",
@@ -46,6 +46,16 @@ describe("DELETE /products/:id", () => {
     expect(response.body).toEqual({
       code: "PRODUCT_NOT_FOUND",
       message: "요청한 상품을 찾을 수 없습니다.",
+    });
+  });
+
+  it("id가 숫자가 아니면 400 Bad Request를 반환한다.", async () => {
+    const response = await request(app).delete("/products/abc");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: "INVALID_PRODUCT_ID",
+      message: "상품 ID는 숫자여야 합니다.",
     });
   });
 });

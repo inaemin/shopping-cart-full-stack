@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../../src/app.js";
-import { reset, saveNewItem } from "../../src/repositories/cart.repository.js";
+import app from "../../../src/app.js";
+import { reset, saveNewItem } from "../../../src/repositories/cart.repository.js";
 
 describe("DELETE /cart/:id", () => {
   beforeEach(() => {
@@ -25,6 +25,16 @@ describe("DELETE /cart/:id", () => {
     expect(response.body).toEqual({
       code: "CART_ITEM_NOT_FOUND",
       message: "장바구니 상품을 찾을 수 없습니다.",
+    });
+  });
+
+  it("id가 숫자가 아니면 400 Bad Request를 반환한다.", async () => {
+    const response = await request(app).delete("/cart/abc");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: "INVALID_CART_ITEM_ID",
+      message: "장바구니 상품 ID는 숫자여야 합니다.",
     });
   });
 });

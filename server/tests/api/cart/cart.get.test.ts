@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../../src/app.js";
-import { reset, saveNewItem } from "../../src/repositories/cart.repository.js";
+import app from "../../../src/app.js";
+import { reset, saveNewItem } from "../../../src/repositories/cart.repository.js";
 
 describe("GET /cart", () => {
   beforeEach(() => {

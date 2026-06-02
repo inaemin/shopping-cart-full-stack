@@ -30,7 +30,7 @@ class StringSchema {
     return this;
   }
 
-  public parse(val: unknown): string {
+  public parse(val: unknown) {
     if (typeof val !== "string") {
       throw new ZodError([{ message: "Not a string" }]);
     }
@@ -72,7 +72,7 @@ class NumberSchema {
     return this;
   }
 
-  public parse(val: unknown): number {
+  public parse(val: unknown) {
     if (typeof val !== "number") {
       throw new ZodError([{ message: "Not a number" }]);
     }
@@ -81,10 +81,14 @@ class NumberSchema {
   }
 }
 
-class ObjectSchema {
-  constructor(private shape: Record<string, { parse: (val: unknown) => unknown }>) {}
+type InferShape<S extends Record<string, { parse: (val: unknown) => unknown }>> = {
+  [K in keyof S]: ReturnType<S[K]["parse"]>;
+};
 
-  public parse(val: unknown) {
+class ObjectSchema<S extends Record<string, { parse: (val: unknown) => unknown }>> {
+  constructor(private shape: S) {}
+
+  public parse(val: unknown): InferShape<S> {
     if (typeof val !== "object" || val === null) {
       throw new ZodError([{ message: "Not an object" }]);
     }
@@ -92,18 +96,18 @@ class ObjectSchema {
     for (const key in this.shape) {
       result[key] = this.shape[key].parse((val as Record<string, unknown>)[key]);
     }
-    return result;
+    return result as InferShape<S>;
   }
 }
 
-class ArraySchema {
-  constructor(private schema: { parse: (val: unknown) => unknown }) {}
+class ArraySchema<T> {
+  constructor(private schema: { parse: (val: unknown) => T }) {}
 
-  public parse(val: unknown) {
+  public parse(val: unknown): T[] {
     if (!Array.isArray(val)) {
       throw new ZodError([{ message: "Not an Array" }]);
     }
-    const result: unknown[] = [];
+    const result: T[] = [];
     for (const item of val) {
       result.push(this.schema.parse(item));
     }
@@ -124,5 +128,7 @@ export const z = {
   string: () => new StringSchema(),
   number: () => new NumberSchema(),
   object: (shape: Record<string, { parse: (val: unknown) => unknown }>) => new ObjectSchema(shape),
-  array: (schema: { parse: (val: unknown) => unknown }) => new ArraySchema(schema),
+  array: <S extends { parse: (val: unknown) => unknown }>(schema: S) => new ArraySchema(schema),
 };
+
+export type infer<S extends { parse: (val: unknown) => unknown }> = ReturnType<S["parse"]>;

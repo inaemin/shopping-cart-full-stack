@@ -9,6 +9,11 @@ function throwIfInvalid<T>(rules: Array<Rule<T>>, val: T): void {
 
 class StringSchema {
   private rules: Array<Rule<string>> = [];
+  private typeError?: string;
+
+  constructor(options?: { error?: string }) {
+    this.typeError = options?.error;
+  }
 
   public min(n: number, message?: string): StringSchema {
     this.rules.push((val) => {
@@ -32,7 +37,7 @@ class StringSchema {
 
   public parse(val: unknown) {
     if (typeof val !== "string") {
-      throw new ZodError([{ message: "Not a string" }]);
+      throw new ZodError([{ message: this.typeError ?? "Not a string" }]);
     }
     throwIfInvalid(this.rules, val);
     return val;
@@ -41,6 +46,11 @@ class StringSchema {
 
 class NumberSchema {
   private rules: Array<Rule<number>> = [];
+  private typeError?: string;
+
+  constructor(options?: { error?: string }) {
+    this.typeError = options?.error;
+  }
 
   public min(n: number, message?: string): NumberSchema {
     this.rules.push((val) => {
@@ -48,6 +58,16 @@ class NumberSchema {
         return null;
       }
       return message ?? "too small";
+    });
+    return this;
+  }
+
+  public max(n: number, message?: string): NumberSchema {
+    this.rules.push((val) => {
+      if (val <= n) {
+        return null;
+      }
+      return message ?? "too large";
     });
     return this;
   }
@@ -74,7 +94,7 @@ class NumberSchema {
 
   public parse(val: unknown) {
     if (typeof val !== "number") {
-      throw new ZodError([{ message: "Not a number" }]);
+      throw new ZodError([{ message: this.typeError ?? "Not a number" }]);
     }
     throwIfInvalid(this.rules, val);
     return val;
@@ -125,9 +145,9 @@ export class ZodError extends Error {
 }
 
 export const z = {
-  string: () => new StringSchema(),
-  number: () => new NumberSchema(),
-  object: (shape: Record<string, { parse: (val: unknown) => unknown }>) => new ObjectSchema(shape),
+  string: (options?: { error?: string }) => new StringSchema(options),
+  number: (options?: { error?: string }) => new NumberSchema(options),
+  object: <S extends Record<string, { parse: (val: unknown) => unknown }>>(shape: S) => new ObjectSchema(shape),
   array: <S extends { parse: (val: unknown) => unknown }>(schema: S) => new ArraySchema(schema),
 };
 

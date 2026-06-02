@@ -73,6 +73,11 @@ export const ERROR_RESPONSE = {
     message: "요청한 수량이 현재 재고보다 많습니다.",
   },
 
+  NOT_FOUND: {
+    code: "NOT_FOUND",
+    message: "요청한 리소스를 찾을 수 없습니다.",
+  },
+
   INTERNAL_SERVER_ERROR: {
     code: "INTERNAL_SERVER_ERROR",
     message: "서버 내부 오류가 발생했습니다.",

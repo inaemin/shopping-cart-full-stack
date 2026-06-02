@@ -4,6 +4,7 @@ import { createProduct, deleteProduct, getProducts } from "./controllers/product
 import { getCartItems, updateCartItemQuantity, deleteCartItem } from "./controllers/cart.controller.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import { validateProductId, validateCartItemId } from "./middlewares/validateId.js";
+import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 
 const app = express();
 app.use(
@@ -23,9 +24,7 @@ app.get("/cart", getCartItems);
 app.patch("/cart/:id", validateCartItemId, updateCartItemQuantity);
 app.delete("/cart/:id", validateCartItemId, deleteCartItem);
 
-app.use((_request, response) => {
-  response.status(404).json({ code: "NOT_FOUND", message: "요청한 리소스를 찾을 수 없습니다." });
-});
+app.use(notFoundHandler);
 
 app.use(errorHandler);
 

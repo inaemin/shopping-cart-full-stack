@@ -32,6 +32,9 @@ export function findStockById(id: number) {
 
 export function deleteById(id: number): boolean {
   const index = products.findIndex((product) => product.id === id);
+  if (index === -1) {
+    return false;
+  }
   products.splice(index, 1);
   return true;
 }

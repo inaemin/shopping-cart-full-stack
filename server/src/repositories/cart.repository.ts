@@ -21,6 +21,9 @@ export function updateItemQuantity(id: number, quantity: number) {
 
 export function deleteById(id: number) {
   const index = cartItems.findIndex((item) => item.id === id);
+  if (index === -1) {
+    return false;
+  }
   cartItems.splice(index, 1);
   return true;
 }

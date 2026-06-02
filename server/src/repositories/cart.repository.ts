@@ -15,7 +15,7 @@ export function saveNewItem(newItem: newCartItem) {
 export function updateItemQuantity(id: number, quantity: number) {
   const existingCartItem = cartItems.find((item) => item.id === id);
   if (existingCartItem) {
-    existingCartItem.quantity = existingCartItem.quantity + quantity;
+    existingCartItem.quantity = quantity;
   }
 }
 

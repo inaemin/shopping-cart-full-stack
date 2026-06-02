@@ -66,11 +66,11 @@ describe("cart.repository", () => {
   });
 
   describe("updateItemQuantity", () => {
-    it("장바구니 항목의 수량을 누적해서 업데이트한다.", () => {
+    it("장바구니 항목의 수량을 새 값으로 교체한다.", () => {
       saveNewItem({ productId: 1, quantity: 1 });
       const [item] = findAll();
       updateItemQuantity(item.id, 3);
-      expect(findAll()[0].quantity).toBe(4);
+      expect(findAll()[0].quantity).toBe(3);
     });
   });
 

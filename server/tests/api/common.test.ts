@@ -4,6 +4,7 @@ import app from "../../src/app.js";
 import { Request, Response, NextFunction } from "express";
 import errorHandler from "../../src/middlewares/errorHandler.js";
 import { ZodError } from "../../src/utils/z.js";
+import { AppError } from "../../src/errors/AppError.js";
 
 describe("공통 에러 핸들러", () => {
   it("존재하지 않는 경로로 요청하면 404를 반환한다.", async () => {
@@ -30,6 +31,23 @@ describe("공통 에러 핸들러", () => {
     expect(mockRes.json).toHaveBeenCalledWith({
       code: "REQUIRED_PRODUCT_NAME",
       message: "상품 이름은 필수입니다.",
+    });
+  });
+
+  it("AppError가 발생하면 해당 status와 code를 반환한다.", () => {
+    const mockReq = {} as Request;
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
+    const mockNext = jest.fn() as NextFunction;
+
+    errorHandler(new AppError("PRODUCT_NOT_FOUND", 404), mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(404);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      code: "PRODUCT_NOT_FOUND",
+      message: "요청한 상품을 찾을 수 없습니다.",
     });
   });
 

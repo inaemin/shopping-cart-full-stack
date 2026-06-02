@@ -1,6 +1,7 @@
 import { updateCartItemQuantity, deleteCartItem, getCartItems } from "../../../src/services/cart.service.js";
 import { reset as resetCart, saveNewItem } from "../../../src/repositories/cart.repository.js";
 import { reset as resetProducts, save as saveProduct } from "../../../src/repositories/products.repository.js";
+import { AppError } from "../../../src/errors/AppError.js";
 
 const validProduct = {
   name: "콜라",
@@ -24,46 +25,43 @@ describe("cart.service", () => {
   });
 
   describe("updateCartItemQuantity", () => {
-    it("유효한 요청이면 SUCCESS를 반환한다.", async () => {
+    it("유효한 요청이면 정상 완료된다.", async () => {
       saveProduct(validProduct);
       saveNewItem({ productId: 1, quantity: 1 });
       const [item] = await getCartItems();
-      const result = await updateCartItemQuantity(item.id, 5);
-      expect(result).toBe("SUCCESS");
+      await expect(updateCartItemQuantity(item.id, 5)).resolves.not.toThrow();
     });
 
-    it("존재하지 않는 장바구니 항목이면 CART_ITEM_NOT_FOUND를 반환한다.", async () => {
-      const result = await updateCartItemQuantity(9999, 1);
-      expect(result).toBe("CART_ITEM_NOT_FOUND");
+    it("존재하지 않는 장바구니 항목이면 CART_ITEM_NOT_FOUND AppError를 던진다.", async () => {
+      await expect(updateCartItemQuantity(9999, 1)).rejects.toThrow(AppError);
+      await expect(updateCartItemQuantity(9999, 1)).rejects.toMatchObject({ code: "CART_ITEM_NOT_FOUND" });
     });
 
-    it("장바구니 항목의 상품이 삭제된 경우 PRODUCT_NOT_FOUND를 반환한다.", async () => {
+    it("장바구니 항목의 상품이 삭제된 경우 PRODUCT_NOT_FOUND AppError를 던진다.", async () => {
       saveNewItem({ productId: 9999, quantity: 1 });
       const [item] = await getCartItems();
-      const result = await updateCartItemQuantity(item.id, 1);
-      expect(result).toBe("PRODUCT_NOT_FOUND");
+      await expect(updateCartItemQuantity(item.id, 1)).rejects.toMatchObject({ code: "PRODUCT_NOT_FOUND" });
     });
 
-    it("요청 수량이 재고보다 많으면 OUT_OF_STOCK를 반환한다.", async () => {
+    it("요청 수량이 재고보다 많으면 OUT_OF_STOCK AppError를 던진다.", async () => {
       saveProduct(validProduct);
       saveNewItem({ productId: 1, quantity: 1 });
       const [item] = await getCartItems();
-      const result = await updateCartItemQuantity(item.id, validProduct.stock + 1);
-      expect(result).toBe("OUT_OF_STOCK");
+      await expect(updateCartItemQuantity(item.id, validProduct.stock + 1)).rejects.toMatchObject({
+        code: "OUT_OF_STOCK",
+      });
     });
   });
 
   describe("deleteCartItem", () => {
-    it("존재하는 항목을 삭제하면 true를 반환한다.", async () => {
+    it("존재하는 항목을 삭제하면 정상 완료된다.", async () => {
       saveNewItem({ productId: 1, quantity: 1 });
       const [item] = await getCartItems();
-      const result = await deleteCartItem(item.id);
-      expect(result).toBe(true);
+      await expect(deleteCartItem(item.id)).resolves.not.toThrow();
     });
 
-    it("존재하지 않는 항목을 삭제하면 false를 반환한다.", async () => {
-      const result = await deleteCartItem(9999);
-      expect(result).toBe(false);
+    it("존재하지 않는 항목을 삭제하면 CART_ITEM_NOT_FOUND AppError를 던진다.", async () => {
+      await expect(deleteCartItem(9999)).rejects.toMatchObject({ code: "CART_ITEM_NOT_FOUND" });
     });
   });
 });

@@ -1,10 +1,19 @@
-import { useState } from "react";
-import "./App.css";
+import { createBrowserRouter, RouterProvider } from "react-router";
+import MobileLayout from "./components/MobileLayout";
+import CartPage from "./pages/CartPage";
+import OrderConfirmPage from "./pages/OrderConfirmPage";
 
-function App() {
-  const [count] = useState(0);
+const router = createBrowserRouter([
+  {
+    path: "/",
+    Component: MobileLayout,
+    children: [
+      { path: "cart", Component: CartPage },
+      { path: "order-confirm", Component: OrderConfirmPage },
+    ],
+  },
+]);
 
-  return <>{count}</>;
+export default function App() {
+  return <RouterProvider router={router} />;
 }
-
-export default App;

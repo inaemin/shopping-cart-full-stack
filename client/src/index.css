@@ -1,2 +1,40 @@
+@import "./reset.css";
+
 :root {
+}
+
+.typo-xl-r {
+  font-size: 24px;
+  font-weight: normal;
+  line-height: 1;
+}
+
+.typo-xl-b {
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.typo-md-r {
+  font-size: 16px;
+  font-weight: normal;
+  line-height: 16px;
+}
+
+.typo-md-b {
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 16px;
+}
+
+.typo-sm-r {
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 15px;
+}
+
+.typo-sm-b {
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 15px;
 }

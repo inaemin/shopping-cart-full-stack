@@ -43,7 +43,6 @@ Please change the parent <Route path="${e}"> to <Route path="${e===`/`?`*`:`${e}
     background-color: #000;
     color: #fff;
   `,secondary:H`
-    width: auto;
     background-color: #fff;
     color: #000;
     border: 1px solid #e5e5e5;

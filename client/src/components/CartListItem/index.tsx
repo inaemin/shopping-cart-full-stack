@@ -10,13 +10,13 @@ interface CartListItemProps {
   cartItem: CartItem;
   onSelect: (id: number) => void;
   onDelete: (id: number) => void;
-  onQuantityUpdate: (id: number, quantity: number) => void;
+  onQuantityUpdate: (id: number, quantity: number) => Promise<void>;
 }
 
 const formatPrice = (price: number) => price.toLocaleString("ko-KR") + "원";
 
 export default function CartListItem({ cartItem, onSelect, onDelete, onQuantityUpdate }: CartListItemProps) {
-  const { id, name, imageUrl, price, quantity, isSelected, isAvailable } = cartItem;
+  const { id, name, imageUrl, price, quantity, isSelected, isAvailable, errorMsg } = cartItem;
   const isPurchaseDisabled = !isAvailable;
 
   const { isPending, increaseCartItemQuantity, decreaseCartItemQuantity } = useUpdateCartItemQuantity(onQuantityUpdate);
@@ -49,6 +49,11 @@ export default function CartListItem({ cartItem, onSelect, onDelete, onQuantityU
             <Button variant="icon" onClick={handleIncrease} disabled={isPending || isPurchaseDisabled}>
               <PlusIcon />
             </Button>
+            {errorMsg && (
+              <span className="typo-sm-r" css={errorMsgStyle}>
+                {errorMsg}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -102,6 +107,7 @@ const quantityRowStyle = css`
   align-items: center;
   gap: 8px;
   margin-top: 8px;
+  height: 32px;
 `;
 
 const quantityTextStyle = css`
@@ -111,4 +117,8 @@ const quantityTextStyle = css`
 
 const disabledStyle = css`
   opacity: 0.4;
+`;
+
+const errorMsgStyle = css`
+  color: #e84040;
 `;

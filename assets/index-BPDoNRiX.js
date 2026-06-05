@@ -284,4 +284,4 @@ Please change the parent <Route path="${e}"> to <Route path="${e===`/`?`*`:`${e}
 `,Dc=H`
   flex-shrink: 0;
   height: 56px;
-`,Oc=Fi([{path:`/`,Component:Zo,children:[{path:es.CART.slice(1),Component:gc},{path:es.ORDER_CONFIRM.slice(1),Component:Cc}]}]);function kc(){return U(Ur,{router:Oc})}async function Ac(){let{worker:e}=await S(async()=>{let{worker:e}=await import(`./browser-CmbjmgGg.js`);return{worker:e}},[]);return e.start({onUnhandledRequest:`bypass`})}Ac().then(()=>{(0,v.createRoot)(document.getElementById(`root`)).render(U(_.StrictMode,{children:U(kc,{})}))});
+`,Oc=Fi([{path:`/`,Component:Zo,children:[{path:es.CART.slice(1),Component:gc},{path:es.ORDER_CONFIRM.slice(1),Component:Cc}]}]);function kc(){return U(Ur,{router:Oc})}async function Ac(){let{worker:e}=await S(async()=>{let{worker:e}=await import(`./browser-CmbjmgGg.js`);return{worker:e}},[]);return e.start({onUnhandledRequest:`bypass`,serviceWorker:{url:`/shopping-cart-full-stack/mockServiceWorker.js`}})}Ac().then(()=>{(0,v.createRoot)(document.getElementById(`root`)).render(U(_.StrictMode,{children:U(kc,{})}))});

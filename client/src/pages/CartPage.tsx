@@ -24,8 +24,8 @@ export default function CartPage() {
     isAllSelected,
     isAbleToPurchase,
     deleteCartItem,
-    selectCartItem,
-    toggleSelectAllItem,
+    toggleItemSelection,
+    toggleAllItemSelection,
     handleUpdateCartItemQuantity,
     validateCartForm,
   } = useCartForm();
@@ -65,9 +65,9 @@ export default function CartPage() {
               orderAmount={orderAmount}
               shippingFee={shippingFee}
               totalAmount={totalAmount}
-              selectCartItem={selectCartItem}
+              toggleItemSelection={toggleItemSelection}
               deleteCartItem={deleteCartItem}
-              toggleSelectAllItem={toggleSelectAllItem}
+              toggleAllItemSelection={toggleAllItemSelection}
               onQuantityUpdate={handleUpdateCartItemQuantity}
             />
           </form>

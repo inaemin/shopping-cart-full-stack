@@ -10,10 +10,10 @@ interface CartListProps {
   orderAmount: number;
   shippingFee: number;
   totalAmount: number;
-  selectCartItem: (id: number) => void;
+  toggleItemSelection: (id: number) => void;
   deleteCartItem: (id: number) => void;
-  toggleSelectAllItem: () => void;
-  onQuantityUpdate: (id: number, quantity: number) => void;
+  toggleAllItemSelection: () => void;
+  onQuantityUpdate: (id: number, quantity: number) => Promise<void>;
 }
 
 export default function CartList({
@@ -22,9 +22,9 @@ export default function CartList({
   orderAmount,
   shippingFee,
   totalAmount,
-  selectCartItem,
+  toggleItemSelection,
   deleteCartItem,
-  toggleSelectAllItem,
+  toggleAllItemSelection,
   onQuantityUpdate,
 }: CartListProps) {
   return (
@@ -33,7 +33,7 @@ export default function CartList({
         <p className="typo-sm-r">현재 {cartList.length}종류의 상품이 담겨있습니다.</p>
       </div>
       <div css={selectAllRowStyle}>
-        <Checkbox checked={isAllSelected} onChange={toggleSelectAllItem}>
+        <Checkbox checked={isAllSelected} onChange={toggleAllItemSelection}>
           <span className="typo-sm-r">전체선택</span>
         </Checkbox>
       </div>
@@ -43,7 +43,7 @@ export default function CartList({
             <CartListItem
               key={cartItem.id}
               cartItem={cartItem}
-              onSelect={selectCartItem}
+              onSelect={toggleItemSelection}
               onDelete={deleteCartItem}
               onQuantityUpdate={onQuantityUpdate}
             />

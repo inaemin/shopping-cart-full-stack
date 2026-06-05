@@ -27,17 +27,21 @@ export default function OrderConfirmPage() {
         <Header.BackButton />
       </Header>
       <main css={mainStyle}>
-        <h1 css={titleStyle}>주문 확인</h1>
-        <p css={descStyle}>
+        <h1 className="typo-xl-b">주문 확인</h1>
+        <p className="typo-sm-r">
           총 {orderSummary.cartItemCount}종류의 상품 {orderSummary.totalQuantity}개를 주문합니다.
           <br />
           최종 결제 금액을 확인해 주세요.
         </p>
-        <p css={totalLabelStyle}>총 결제 금액</p>
-        <p css={totalAmountStyle}>{formatPrice(totalAmount)}</p>
+        <div css={totalGroupStyle}>
+          <p className="typo-md-b">총 결제 금액</p>
+          <p className="typo-xl-b">{formatPrice(totalAmount)}</p>
+        </div>
       </main>
       <footer css={footerStyle}>
-        <Button disabled>결제하기</Button>
+        <Button disabled>
+          <span className="typo-md-b">결제하기</span>
+        </Button>
       </footer>
     </div>
   );
@@ -56,33 +60,18 @@ const mainStyle = css`
   justify-content: center;
   align-items: center;
   padding: 32px 24px;
-  gap: 12px;
+  gap: 24px;
   text-align: center;
 `;
 
-const titleStyle = css`
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-`;
-
-const descStyle = css`
-  font-size: 14px;
-  color: #555;
-  line-height: 1.6;
-`;
-
-const totalLabelStyle = css`
-  font-size: 14px;
-  color: #333;
-  margin-top: 16px;
-`;
-
-const totalAmountStyle = css`
-  font-size: 24px;
-  font-weight: 700;
+const totalGroupStyle = css`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
 `;
 
 const footerStyle = css`
   flex-shrink: 0;
+  height: 56px;
 `;

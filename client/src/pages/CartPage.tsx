@@ -1,5 +1,6 @@
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router";
+import { ROUTES } from "../constants/routes";
 import Button from "../components/Button";
 import CartList from "../components/CartList";
 import EmptyCartList from "../components/EmptyCartList";
@@ -43,7 +44,7 @@ export default function CartPage() {
       totalAmount,
     };
 
-    navigate("/order-confirm", { state: { orderSummary, totalAmount } });
+    navigate(ROUTES.ORDER_CONFIRM, { state: { orderSummary, totalAmount } });
   };
 
   return (

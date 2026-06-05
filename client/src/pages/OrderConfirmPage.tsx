@@ -1,5 +1,6 @@
 import { css } from "@emotion/react";
 import { Navigate, useLocation } from "react-router";
+import { ROUTES } from "../constants/routes";
 import Button from "../components/Button";
 import Header from "../components/Header";
 import type { OrderSummary } from "../types/cart";
@@ -16,7 +17,7 @@ export default function OrderConfirmPage() {
   const state = location.state as LocationState | null;
 
   if (!state?.orderSummary) {
-    return <Navigate to="/cart" replace />;
+    return <Navigate to={ROUTES.CART} replace />;
   }
 
   const { orderSummary, totalAmount } = state;

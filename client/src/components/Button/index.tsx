@@ -41,7 +41,6 @@ const variantStyles: Record<Variant, ReturnType<typeof css>> = {
     color: #fff;
   `,
   secondary: css`
-    width: auto;
     background-color: #fff;
     color: #000;
     border: 1px solid #e5e5e5;

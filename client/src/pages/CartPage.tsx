@@ -74,7 +74,7 @@ export default function CartPage() {
       </main>
       <footer css={footerStyle}>
         <Button type="submit" form="cart-form" disabled={!isAbleToPurchase}>
-          주문 확인
+          <span className="typo-md-b">주문 확인</span>
         </Button>
       </footer>
     </div>
@@ -91,6 +91,7 @@ const mainStyle = css`
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
   padding: 36px 24px;
 `;
 
@@ -103,8 +104,10 @@ const formStyle = css`
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
 `;
 
 const footerStyle = css`
   flex-shrink: 0;
+  height: 56px;
 `;

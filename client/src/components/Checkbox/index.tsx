@@ -15,7 +15,7 @@ export default function Checkbox({
   ...props
 }: CheckboxProps) {
   return (
-    <label css={wrapperStyle}>
+    <label css={[wrapperStyle, disabled && disabledWrapperStyle]}>
       <input
         type="checkbox"
         css={[
@@ -71,5 +71,17 @@ const inputStyle = css`
 
   &:disabled {
     cursor: not-allowed;
+    background-color: #f5f5f5;
+    border-color: #d9d9d9;
   }
+
+  &:checked:disabled {
+    background-color: #949494;
+    border-color: #949494;
+  }
+`;
+
+const disabledWrapperStyle = css`
+  cursor: not-allowed;
+  color: #949494;
 `;

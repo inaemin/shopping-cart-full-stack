@@ -2,7 +2,7 @@ import { css, keyframes } from "@emotion/react";
 
 export default function SkeletonList() {
   return (
-    <div css={containerStyle}>
+    <div css={containerStyle} data-testid="skeleton-list">
       <div css={sectionStyle}>
         <div css={bar(15)} />
       </div>

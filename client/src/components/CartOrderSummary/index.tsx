@@ -27,7 +27,7 @@ export default function CartOrderSummary({ orderAmount, shippingFee, totalAmount
           <span className="typo-xl-b">{formatPrice(shippingFee)}</span>
         </div>
       </div>
-      <div css={totalRowStyle}>
+      <div css={totalRowStyle} data-testid="total-amount">
         <span className="typo-md-b">총 결제 금액</span>
         <span className="typo-xl-b">{formatPrice(totalAmount)}</span>
       </div>

@@ -1,1 +1,2 @@
-cd server && npx lint-staged
+git diff --cached --name-only | grep -q '^server/' && (cd server && npx lint-staged)
+git diff --cached --name-only | grep -q '^client/' && (cd client && npx lint-staged)

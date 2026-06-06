@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "check": "tsc -b && eslint . && vitest run --project unit",
     "test": "vitest --project unit",
     "test:ui": "vitest --project unit --ui",
     "storybook": "storybook dev -p 6006",
@@ -43,6 +44,7 @@
     "eslint-plugin-storybook": "^10.4.1",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.7",
     "msw": "^2.14.6",
     "playwright": "^1.60.0",
     "storybook": "^10.4.1",
@@ -54,6 +56,11 @@
   "msw": {
     "workerDirectory": [
       "public"
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
     ]
   }
 }

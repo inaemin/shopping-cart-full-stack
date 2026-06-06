@@ -1,1 +1,2 @@
-cd server && npm run check
+git diff origin/$(git rev-parse --abbrev-ref HEAD)..HEAD --name-only 2>/dev/null | grep -q '^server/' && (cd server && npm run check)
+git diff origin/$(git rev-parse --abbrev-ref HEAD)..HEAD --name-only 2>/dev/null | grep -q '^client/' && (cd client && npm run check)

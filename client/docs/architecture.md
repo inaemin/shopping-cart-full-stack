@@ -16,8 +16,16 @@ imageUrl: string;
 price: number;
 quantity: number;
 isSelected: boolean; // getDefaultItemSelectPolicy(id)
-isAvailable: boolean; // 재고가 0인 경우 false
+isAvailable: boolean; // 서버에서 사라진 상품인 경우 false
 errorMsg?: string;
+}
+
+## OrderSummary
+
+{
+cartItemCount: number;
+totalQuantity: number;
+totalAmount: number;
 }
 
 # hooks
@@ -49,7 +57,7 @@ errorMsg?: string;
 - toggleItemSelection(id): 선택 상태 토글 및 로컬스토리지 저장
 - toggleAllItemSelection(): 전체선택이 되어있다면 전체 선택해제하고, 전체해제되어있다면 전체선택하고, 일부선택이 되어있다면 전체선택한다.
 - handleUpdateCartItemQuantity(id, quantity): PATCH API 호출. 성공 시 quantity 업데이트, 실패 시 errorMsg 설정.
-- validateCartForm(): 서버에 있는 최신 재고 상태와, 장바구니 상태와 맞는지 검증.
+- validateCartForm(): 서버에 있는 최신 장바구니를 다시 불러와 quantity를 동기화하고, 서버에서 사라진 상품은 구매 불가능 상태로 변경.
 
 ## useUpdateCartItemQuantity
 
@@ -61,7 +69,11 @@ errorMsg?: string;
 
 ### states
 
-- status: "pending", "idle", "error"
+- status: "idle", "pending", "error"
+
+### derived variables
+
+- isPending: status === "pending"
 
 ### functions
 
@@ -84,7 +96,7 @@ errorMsg?: string;
 ### functions
 
 - handleSubmitCart: OrderConfirmPage로 이동. state에 주문서 포함.
-  (selectedItems.length, total quantity, totalAmount)
+  (orderSummary: { cartItemCount, totalQuantity, totalAmount }, totalAmount)
 
 ### views
 
@@ -105,14 +117,14 @@ errorMsg?: string;
 </main>
 <footer>
     <Button type="submit" form="cart-form" disabled={!isAbleToPurchase}>
-        주문 확인
+        <span className="typo-md-b">주문 확인</span>
     </Button>
 </footer>
 ```
 
 ## OrderConfirmPage
 
-> state가 없다면 CartPage로 이동
+> state.orderSummary가 없다면 CartPage로 이동
 
 ### views
 
@@ -134,12 +146,27 @@ errorMsg?: string;
 </main>
 <footer>
     <Button disabled>
-        결제하기
+        <span className="typo-md-b">결제하기</span>
     </Button>
 </footer>
 ```
 
 # Components
+
+## Header
+
+### functions
+
+- Header.Title
+- Header.BackButton: 이전 페이지로 이동
+
+### views
+
+```
+<header>
+    {children}
+</header>
+```
 
 ## SkeletonList
 
@@ -147,13 +174,19 @@ errorMsg?: string;
 
 ```
 <div>
-    <div />
-    <div />
-    {Array.from({ length: 2 }).map(() => <div />)}
     <div>
-        <div />
-        <div />
-        <div />
+        <div /> // 15px
+    </div>
+    <div /> // 24px
+    {Array.from({ length: 2 }).map(() => (
+        <div>
+            <div /> // 160px
+        </div>
+    ))}
+    <div>
+        <div /> // 16px
+        <div /> // 92px
+        <div /> // 42px
     </div>
 </div>
 ```
@@ -164,7 +197,22 @@ errorMsg?: string;
 
 ```
 <div>
-    장바구니에 담은 상품이 없습니다.
+    <p>장바구니에 담은 상품이 없습니다.</p>
+</div>
+```
+
+## ErrorList
+
+### views
+
+```
+<div>
+    <p>오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>
+    <div>
+        <Button>
+            <span className="typo-md-b">다시 시도</span>
+        </Button>
+    </div>
 </div>
 ```
 
@@ -186,7 +234,7 @@ errorMsg?: string;
 <p>현재 {cartList.length}종류의 상품이 담겨있습니다.</p>
 
 <Checkbox checked={isAllSelected} onChange={toggleAllItemSelection}>
-    전체선택
+    <span>전체선택</span>
 </Checkbox>
 {cartList.map((cartItem) => <CartListItem key={cartItem.id} cartItem={cartItem} onSelect={toggleItemSelection} onDelete={deleteCartItem} onQuantityUpdate={onQuantityUpdate} />)}
 <CartOrderSummary orderAmount={orderAmount} shippingFee={shippingFee} totalAmount={totalAmount}/>
@@ -205,7 +253,7 @@ errorMsg?: string;
   price: number;
   quantity: number;
   isSelected: boolean; // getDefaultItemSelectPolicy(id)
-  isAvailable: boolean; // 재고가 0인 경우 false
+  isAvailable: boolean; // 서버에서 사라진 상품인 경우 false
   errorMsg?: string;
   }
 - onQuantityUpdate: handleUpdateCartItemQuantity가 내려옴
@@ -236,9 +284,13 @@ errorMsg?: string;
             <span>{name}</span>
             <span>{formatPrice(price)}</span>
             <div>
-                <Button variant="icon" onClick={decreaseCartItemQuantity} disabled={quantity === 1 || isPurchaseDisabled}/>
+                <Button variant="icon" onClick={decreaseCartItemQuantity} disabled={quantity === 1 || isPurchaseDisabled}>
+                    <MinusIcon />
+                </Button>
                 <span>{quantity}</span>
-                <Button variant="icon" onClick={increaseCartItemQuantity} disabled={isPending || isPurchaseDisabled} />
+                <Button variant="icon" onClick={increaseCartItemQuantity} disabled={isPending || isPurchaseDisabled}>
+                    <PlusIcon />
+                </Button>
                 {errorMsg && <span>{errorMsg}</span>}
             </div>
         </div>
@@ -268,6 +320,7 @@ errorMsg?: string;
 
 - size option이 있으면 checkbox 크기 변경
 - children이 있으면 label로 같이 렌더링
+- disabled이면 checkbox와 label 모두 비활성 스타일
 
 ## Button
 

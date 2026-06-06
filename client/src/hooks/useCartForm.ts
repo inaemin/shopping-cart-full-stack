@@ -95,9 +95,9 @@ export function useCartForm() {
 
   const validateCartForm = async () => {
     try {
-      const cartItems = await getCart();
+      const serverCartItems = await getCart();
       const validatedCartList = cartList.map((item) => {
-        const serverItem = cartItems.find((c) => c.id === item.id);
+        const serverItem = serverCartItems.find((c) => c.id === item.id);
         if (!serverItem) return { ...item, isAvailable: false, errorMsg: "더 이상 구매할 수 없는 상품입니다." };
         return { ...item, quantity: serverItem.quantity };
       });

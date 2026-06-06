@@ -30,6 +30,10 @@ jobs:
         env:
           GITHUB_ACTIONS: true
 
+      - name: Build Storybook
+        working-directory: client
+        run: npm run build-storybook -- --output-dir dist/storybook
+
       - name: Copy index.html to 404.html
         run: cp client/dist/index.html client/dist/404.html
 

@@ -65,9 +65,9 @@ export default function CartPage() {
               orderAmount={orderAmount}
               shippingFee={shippingFee}
               totalAmount={totalAmount}
-              toggleItemSelection={toggleItemSelection}
-              deleteCartItem={deleteCartItem}
-              toggleAllItemSelection={toggleAllItemSelection}
+              onSelectItem={toggleItemSelection}
+              onDelete={deleteCartItem}
+              onSelectAllItems={toggleAllItemSelection}
               onQuantityUpdate={handleUpdateCartItemQuantity}
             />
           </form>

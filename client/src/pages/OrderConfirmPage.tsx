@@ -5,22 +5,15 @@ import Button from "../components/Button";
 import Header from "../components/Header";
 import type { OrderSummary } from "../types/cart";
 
-interface LocationState {
-  orderSummary: OrderSummary;
-  totalAmount: number;
-}
-
 const formatPrice = (price: number) => price.toLocaleString("ko-KR") + "원";
 
 export default function OrderConfirmPage() {
   const location = useLocation();
-  const state = location.state as LocationState | null;
+  const orderSummary = location.state as OrderSummary | null;
 
-  if (!state?.orderSummary) {
+  if (!orderSummary) {
     return <Navigate to={ROUTES.CART} replace />;
   }
-
-  const { orderSummary, totalAmount } = state;
 
   return (
     <div css={pageStyle}>
@@ -36,7 +29,7 @@ export default function OrderConfirmPage() {
         </p>
         <div css={totalGroupStyle}>
           <p className="typo-md-b">총 결제 금액</p>
-          <p className="typo-xl-b">{formatPrice(totalAmount)}</p>
+          <p className="typo-xl-b">{formatPrice(orderSummary.totalAmount)}</p>
         </div>
       </main>
       <footer css={footerStyle}>

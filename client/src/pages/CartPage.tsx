@@ -8,7 +8,6 @@ import ErrorList from "../components/ErrorList";
 import Header from "../components/Header";
 import SkeletonList from "../components/SkeletonList";
 import { useCartForm } from "../hooks/useCartForm";
-import type { OrderSummary } from "../types/cart";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -27,24 +26,15 @@ export default function CartPage() {
     toggleItemSelection,
     toggleAllItemSelection,
     handleUpdateCartItemQuantity,
-    validateCartForm,
+    submitCart,
   } = useCartForm();
 
   const handleSubmitCart = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const isValid = await validateCartForm();
-    if (!isValid) return;
+    const orderSummary = await submitCart();
+    if (!orderSummary) return;
 
-    const selectedItems = cartList.filter((item) => item.isSelected && item.isAvailable);
-    const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
-
-    const orderSummary: OrderSummary = {
-      cartItemCount: selectedItems.length,
-      totalQuantity,
-      totalAmount,
-    };
-
-    navigate(ROUTES.ORDER_CONFIRM, { state: { orderSummary, totalAmount } });
+    navigate(ROUTES.ORDER_CONFIRM, { state: orderSummary });
   };
 
   return (

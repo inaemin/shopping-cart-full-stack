@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { CartItem } from "../types/cart";
+import type { CartItem, OrderSummary } from "../types/cart";
 import {
   calculateShippingFee,
   getDefaultItemSelectPolicy,
@@ -14,6 +14,21 @@ import {
 import { ApiError } from "../apis/error";
 
 type Status = "loading" | "success" | "error";
+
+const getSelectedCartItems = (cartList: CartItem[]) => cartList.filter((item) => item.isSelected && item.isAvailable);
+
+const createOrderSummary = (cartList: CartItem[]): OrderSummary => {
+  const selectedCartItems = getSelectedCartItems(cartList);
+  const orderAmount = selectedCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shippingFee = calculateShippingFee(orderAmount);
+  const totalAmount = orderAmount + shippingFee;
+
+  return {
+    cartItemCount: selectedCartItems.length,
+    totalQuantity: selectedCartItems.reduce((sum, item) => sum + item.quantity, 0),
+    totalAmount,
+  };
+};
 
 export function useCartForm() {
   const [cartList, setCartList] = useState<CartItem[]>([]);
@@ -44,18 +59,16 @@ export function useCartForm() {
     loadCart();
   }, []);
 
-  const orderAmount = cartList
-    .filter((item) => item.isSelected && item.isAvailable)
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const selectedCartItems = getSelectedCartItems(cartList);
 
+  const orderAmount = selectedCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = calculateShippingFee(orderAmount);
   const totalAmount = orderAmount + shippingFee;
 
   const isAllSelected = cartList.length > 0 && cartList.every((item) => item.isSelected);
   const hasNoCartItem = status === "success" && cartList.length === 0;
   const hasCartItem = status === "success" && cartList.length > 0;
-  const isAbleToPurchase =
-    status !== "loading" && cartList.filter((item) => item.isSelected && item.isAvailable).length > 0;
+  const isAbleToPurchase = status !== "loading" && selectedCartItems.length > 0;
 
   const deleteCartItem = async (id: number) => {
     const deletedItem = cartList.find((item) => item.id === id);
@@ -77,9 +90,9 @@ export function useCartForm() {
   };
 
   const toggleAllItemSelection = () => {
-    const next = !isAllSelected;
-    cartList.forEach((item) => saveItemSelectionToStorage(item.id, next));
-    setCartList((list) => list.map((item) => ({ ...item, isSelected: next })));
+    const shouldSelectAll = !isAllSelected;
+    cartList.forEach((item) => saveItemSelectionToStorage(item.id, shouldSelectAll));
+    setCartList((list) => list.map((item) => ({ ...item, isSelected: shouldSelectAll })));
   };
 
   const handleUpdateCartItemQuantity = async (id: number, quantity: number) => {
@@ -102,10 +115,20 @@ export function useCartForm() {
         return { ...item, quantity: serverItem.quantity };
       });
       setCartList(validatedCartList);
-      return true;
+      return validatedCartList;
     } catch {
-      return false;
+      return null;
     }
+  };
+
+  const submitCart = async () => {
+    const validatedCartList = await validateCartForm();
+    if (!validatedCartList) return null;
+
+    const selectedCartItems = getSelectedCartItems(validatedCartList);
+    if (selectedCartItems.length === 0) return null;
+
+    return createOrderSummary(validatedCartList);
   };
 
   return {
@@ -123,6 +146,6 @@ export function useCartForm() {
     toggleItemSelection,
     toggleAllItemSelection,
     handleUpdateCartItemQuantity,
-    validateCartForm,
+    submitCart,
   };
 }

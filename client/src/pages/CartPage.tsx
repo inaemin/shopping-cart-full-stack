@@ -44,7 +44,7 @@ export default function CartPage() {
       <main css={mainStyle}>
         <h1 css={titleStyle}>장바구니</h1>
         {isLoading && <SkeletonList />}
-        {hasError && <ErrorList />}
+        {hasError && <ErrorList onRetry={refetch} />}
         {hasNoCartItem && <EmptyCartList />}
         {hasCartItem && (
           <form id="cart-form" onSubmit={handleSubmitCart} css={formStyle}>

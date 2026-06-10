@@ -1,12 +1,16 @@
 import { css } from "@emotion/react";
 import Button from "../Button";
 
-export default function ErrorList() {
+interface ErrorListProps {
+  onRetry: () => void;
+}
+
+export default function ErrorList({ onRetry }: ErrorListProps) {
   return (
     <div css={containerStyle}>
       <p className="typo-md-r">오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>
       <div css={buttonWrapperStyle}>
-        <Button>
+        <Button onClick={onRetry}>
           <span className="typo-md-b">다시 시도</span>
         </Button>
       </div>

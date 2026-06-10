@@ -171,6 +171,7 @@ Please change the parent <Route path="${e}"> to <Route path="${e===`/`?`*`:`${e}
 `,ac=H`
   opacity: 0.4;
 `,oc=H`
+  width: 140px;
   color: #e84040;
 `;function sc({cartList:e,isAllSelected:t,onSelectItem:n,onSelectAllItems:r}){let{orderAmount:i,shippingFee:a,totalAmount:o}=xs(e);return W(`div`,{css:cc,children:[U(`div`,{css:lc,children:W(`p`,{className:`typo-sm-r`,children:[`현재 `,e.length,`종류의 상품이 담겨있습니다.`]})}),U(`div`,{css:uc,children:U(Ms,{checked:t,onChange:r,children:U(`span`,{className:`typo-sm-r`,children:`전체선택`})})}),W(`div`,{css:dc,children:[U(`div`,{css:fc,children:e.map(e=>U(Xs,{cartItem:e,onSelect:n},e.id))}),U(Es,{orderAmount:i,shippingFee:a,totalAmount:o})]})]})}var cc=H`
   display: flex;

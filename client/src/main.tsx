@@ -15,10 +15,16 @@ async function enableMocking() {
   });
 }
 
-enableMocking().then(() => {
+function renderApp() {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <App />
     </StrictMode>,
   );
-});
+}
+
+if (import.meta.env.DEV) {
+  enableMocking().then(renderApp);
+} else {
+  renderApp();
+}

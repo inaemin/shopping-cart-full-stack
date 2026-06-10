@@ -1,5 +1,6 @@
 import request from "supertest";
 import app from "../../../src/app.js";
+import { reset } from "../../../src/repositories/products.repository.js";
 
 const validProduct = {
   name: "콜라",
@@ -9,6 +10,10 @@ const validProduct = {
 };
 
 describe("GET /products", () => {
+  beforeEach(() => {
+    reset();
+  });
+
   it("상품이 없으면 200 OK와 빈 배열을 반환한다.", async () => {
     const response = await request(app).get("/products");
 

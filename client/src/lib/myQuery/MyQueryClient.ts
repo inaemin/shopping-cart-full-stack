@@ -41,10 +41,12 @@ export class MyQueryClient {
     const queryRecord = this.queryCache.get(queryKey);
     if (!queryRecord) return null;
 
-    this.setQueryState(queryKey, {
-      status: "loading",
-      error: null,
-    });
+    if (queryRecord.state.data === null) {
+      this.setQueryState(queryKey, {
+        status: "loading",
+        error: null,
+      });
+    }
 
     try {
       const data = await queryRecord.queryFn();

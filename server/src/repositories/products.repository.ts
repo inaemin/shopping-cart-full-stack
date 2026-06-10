@@ -30,6 +30,10 @@ export function findStockById(id: number) {
   return -1;
 }
 
+export function findById(id: number): Product | undefined {
+  return products.find((product) => product.id === id);
+}
+
 export function deleteById(id: number): boolean {
   const index = products.findIndex((product) => product.id === id);
   if (index === -1) {

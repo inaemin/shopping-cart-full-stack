@@ -31,6 +31,12 @@ export const defaultCartItems: MockCartItem[] = [
 const errorResponse = (error: string, message: string, status: number) =>
   HttpResponse.json({ error, message }, { status });
 
+const getCartItemStatus = (quantity: number, stock: number) => {
+  if (stock === 0) return "outOfStock";
+  if (quantity > stock) return "quantityExceeded";
+  return "available";
+};
+
 export const createHandlers = (
   initialProducts: MockProduct[] = defaultProducts,
   initialCartItems: MockCartItem[] = defaultCartItems,
@@ -42,7 +48,15 @@ export const createHandlers = (
     http.get(`${BASE_URL}/cart`, () => {
       const data = cartItems.map(({ id, productId, quantity }) => {
         const product = products.find((p) => p.id === productId)!;
-        return { id, name: product.name, price: product.price, imageUrl: product.imageUrl, quantity };
+        return {
+          id,
+          name: product.name,
+          price: product.price,
+          imageUrl: product.imageUrl,
+          quantity,
+          stock: product.stock,
+          status: getCartItemStatus(quantity, product.stock),
+        };
       });
       return HttpResponse.json({ data });
     }),
@@ -71,7 +85,7 @@ export const createHandlers = (
       }
 
       const product = products.find((p) => p.id === item.productId)!;
-      if (quantity > product.stock) {
+      if (quantity > product.stock && quantity > item.quantity) {
         return errorResponse("OUT_OF_STOCK", "요청한 수량이 현재 재고보다 많습니다.", 409);
       }
 

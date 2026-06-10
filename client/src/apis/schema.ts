@@ -1,4 +1,4 @@
-export type CartItemStatus = "available" | "outOfStock" | "quantityExceeded";
+import type { CartItemStatus } from "../types/cart";
 
 export interface CartItemResponse {
   id: number;

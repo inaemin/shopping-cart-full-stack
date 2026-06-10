@@ -1,8 +1,9 @@
 import type { CartItemResponse } from "../apis/schema";
-import type { CartItem, CartItemStatus, OrderSummary } from "../types/cart";
+import { CART_ITEM_STATUS, type CartItem, type CartItemStatus, type OrderSummary } from "../types/cart";
 
 const FREE_SHIPPING_THRESHOLD = 100_000;
 const SHIPPING_FEE = 3_000;
+export const MIN_PURCHASE_QUANTITY = 1;
 export const MAX_PURCHASE_QUANTITY = 99;
 
 const CART_SELECTION_KEY = "cart_selection";
@@ -36,11 +37,11 @@ export const calculateShippingFee = (orderAmount: number) => {
 
 export function getCartItemStatusMessage(status: CartItemStatus, stock: number): string | undefined {
   switch (status) {
-    case "outOfStock":
+    case CART_ITEM_STATUS.OUT_OF_STOCK:
       return "품절된 상품입니다.";
-    case "quantityExceeded":
+    case CART_ITEM_STATUS.QUANTITY_EXCEEDED:
       return `최대 구매 가능 수량이 ${Math.min(stock, MAX_PURCHASE_QUANTITY)}개 입니다.`;
-    case "available":
+    case CART_ITEM_STATUS.AVAILABLE:
       return undefined;
   }
 }
@@ -60,7 +61,7 @@ export function toCartItem(item: CartItemResponse, isSelected: boolean): CartIte
 }
 
 export function getCartSummary(cartList: CartItem[]) {
-  const selectedCartItems = cartList.filter((item) => item.isSelected && item.status === "available");
+  const selectedCartItems = cartList.filter((item) => item.isSelected && item.status === CART_ITEM_STATUS.AVAILABLE);
   const orderAmount = selectedCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = calculateShippingFee(orderAmount);
   const totalAmount = orderAmount + shippingFee;
@@ -76,7 +77,7 @@ export function getCartSummary(cartList: CartItem[]) {
 export function canPurchaseCart(cartList: CartItem[]): boolean {
   const selectedCartItems = cartList.filter((item) => item.isSelected);
 
-  return selectedCartItems.length > 0 && selectedCartItems.every((item) => item.status === "available");
+  return selectedCartItems.length > 0 && selectedCartItems.every((item) => item.status === CART_ITEM_STATUS.AVAILABLE);
 }
 
 export function createOrderSummary(cartList: CartItem[]): OrderSummary | null {

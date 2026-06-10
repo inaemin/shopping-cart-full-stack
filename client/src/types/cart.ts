@@ -1,4 +1,10 @@
-export type CartItemStatus = "available" | "outOfStock" | "quantityExceeded";
+export const CART_ITEM_STATUS = {
+  AVAILABLE: "available",
+  OUT_OF_STOCK: "outOfStock",
+  QUANTITY_EXCEEDED: "quantityExceeded",
+} as const;
+
+export type CartItemStatus = (typeof CART_ITEM_STATUS)[keyof typeof CART_ITEM_STATUS];
 
 export interface CartItem {
   id: number;

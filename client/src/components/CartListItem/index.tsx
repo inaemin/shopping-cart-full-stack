@@ -130,5 +130,6 @@ const disabledStyle = css`
 `;
 
 const errorMsgStyle = css`
+  width: 140px;
   color: #e84040;
 `;

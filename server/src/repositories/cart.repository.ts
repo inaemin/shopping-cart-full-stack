@@ -48,6 +48,14 @@ export function findProductIdById(id: number) {
   return -1;
 }
 
+export function findQuantityById(id: number) {
+  const item = cartItems.find((item) => item.id === id);
+  if (item) {
+    return item.quantity;
+  }
+  return -1;
+}
+
 export function reset() {
   cartItems.length = 0;
 }

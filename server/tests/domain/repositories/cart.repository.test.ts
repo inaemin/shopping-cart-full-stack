@@ -2,6 +2,7 @@ import {
   saveNewItem,
   findAll,
   findProductIdById,
+  findQuantityById,
   updateItemQuantity,
   deleteById,
   deleteByProductId,
@@ -50,6 +51,18 @@ describe("cart.repository", () => {
 
     it("존재하지 않는 항목이면 -1을 반환한다.", () => {
       expect(findProductIdById(9999)).toBe(-1);
+    });
+  });
+
+  describe("findQuantityById", () => {
+    it("존재하는 장바구니 항목의 quantity를 반환한다.", () => {
+      saveNewItem({ productId: 1, quantity: 3 });
+      const [item] = findAll();
+      expect(findQuantityById(item.id)).toBe(3);
+    });
+
+    it("존재하지 않는 항목이면 -1을 반환한다.", () => {
+      expect(findQuantityById(9999)).toBe(-1);
     });
   });
 

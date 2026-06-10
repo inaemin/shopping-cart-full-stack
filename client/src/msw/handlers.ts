@@ -37,9 +37,14 @@ const getCartItemStatus = (quantity: number, stock: number) => {
   return "available";
 };
 
+export interface PatchDelayController {
+  wait: () => Promise<void>;
+}
+
 export const createHandlers = (
   initialProducts: MockProduct[] = defaultProducts,
   initialCartItems: MockCartItem[] = defaultCartItems,
+  patchDelay?: PatchDelayController,
 ) => {
   const products = initialProducts.map((p) => ({ ...p }));
   const cartItems = initialCartItems.map((c) => ({ ...c }));
@@ -62,6 +67,10 @@ export const createHandlers = (
     }),
 
     http.patch(`${BASE_URL}/cart/:id`, async ({ params, request }) => {
+      if (patchDelay) {
+        await patchDelay.wait();
+      }
+
       const id = Number(params.id);
 
       if (isNaN(id)) {

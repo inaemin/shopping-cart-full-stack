@@ -5,13 +5,16 @@ import { describe, it, expect } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "./setup";
 import { createHandlers } from "../msw/handlers";
+import { MyQueryProvider } from "../lib/myQuery/MyQueryProvider";
 import CartPage from "../pages/CartPage";
 
 function renderCartPage() {
   return render(
-    <MemoryRouter>
-      <CartPage />
-    </MemoryRouter>,
+    <MyQueryProvider>
+      <MemoryRouter>
+        <CartPage />
+      </MemoryRouter>
+    </MyQueryProvider>,
   );
 }
 
@@ -191,13 +194,9 @@ describe("수량 변경", () => {
     const user = userEvent.setup();
     let resolveUpdate!: () => void;
     server.use(
-      http.patch(
-        "http://localhost:3000/cart/:id",
-        () =>
-          new Promise<Response>((resolve) => {
-            resolveUpdate = () => resolve(new HttpResponse(null, { status: 204 }));
-          }),
-      ),
+      ...createHandlers(undefined, undefined, {
+        wait: () => new Promise<void>((resolve) => (resolveUpdate = resolve)),
+      }),
     );
     renderCartPage();
 
@@ -317,14 +316,17 @@ describe("상품 삭제", () => {
     expect(screen.queryByText("상품 A")).not.toBeInTheDocument(); // 낙관적 업데이트
 
     // 삭제 요청 중에 상품 B 선택 해제
-    const checkboxes = screen.getAllByRole("checkbox");
-    await user.click(checkboxes[1]); // 상품 B 해제
-    expect(checkboxes[1]).not.toBeChecked();
+    const getItemContainer = (text: string) =>
+      screen.getByText(text).closest("div")!.parentElement!.parentElement!.parentElement!;
+
+    const checkboxB = within(getItemContainer("상품 B")).getByRole("checkbox");
+    await user.click(checkboxB);
+    expect(checkboxB).not.toBeChecked();
 
     // 삭제 실패 → 상품 A만 복원, 상품 B 선택 상태는 유지
     resolveDelete();
     expect(await screen.findByText("상품 A")).toBeInTheDocument();
-    expect(screen.getAllByRole("checkbox")[1]).not.toBeChecked(); // 상품 B 선택 해제 유지
+    expect(within(getItemContainer("상품 B")).getByRole("checkbox")).not.toBeChecked(); // 상품 B 선택 해제 유지
   });
 });
 

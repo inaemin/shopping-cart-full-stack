@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import { CART_ITEM_STATUS } from "../types/cart";
 
 const BASE_URL = "http://localhost:3000";
 
@@ -32,9 +33,9 @@ const errorResponse = (error: string, message: string, status: number) =>
   HttpResponse.json({ error, message }, { status });
 
 const getCartItemStatus = (quantity: number, stock: number) => {
-  if (stock === 0) return "outOfStock";
-  if (quantity > stock) return "quantityExceeded";
-  return "available";
+  if (stock === 0) return CART_ITEM_STATUS.OUT_OF_STOCK;
+  if (quantity > stock) return CART_ITEM_STATUS.QUANTITY_EXCEEDED;
+  return CART_ITEM_STATUS.AVAILABLE;
 };
 
 export interface PatchDelayController {

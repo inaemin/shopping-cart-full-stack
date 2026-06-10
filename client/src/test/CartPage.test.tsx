@@ -347,3 +347,99 @@ describe("주문 확인 버튼", () => {
     expect(screen.getByRole("button", { name: "주문 확인" })).not.toBeDisabled();
   });
 });
+
+const getItemContainer = (text: string) =>
+  screen.getByText(text).closest("div")!.parentElement!.parentElement!.parentElement!;
+
+describe("품절(outOfStock) 상품", () => {
+  const products = [{ id: 1, name: "품절 상품", price: 10000, imageUrl: "https://placehold.co/80x80", stock: 0 }];
+  const cartItems = [{ id: 1, productId: 1, quantity: 1 }];
+
+  it("체크박스, 수량 증가/감소 버튼이 모두 비활성화되고 품절 메시지가 표시된다", async () => {
+    server.use(...createHandlers(products, cartItems));
+    renderCartPage();
+
+    await screen.findByText("품절 상품");
+    expect(screen.getByText("품절된 상품입니다.")).toBeInTheDocument();
+
+    const item = getItemContainer("품절 상품");
+    const checkbox = within(item).getByRole("checkbox");
+    const [, decreaseButton, increaseButton] = within(item).getAllByRole("button");
+
+    expect(checkbox).toBeDisabled();
+    expect(decreaseButton).toBeDisabled();
+    expect(increaseButton).toBeDisabled();
+  });
+});
+
+describe("최대 구매 가능 수량 초과(quantityExceeded) 상품", () => {
+  const products = [{ id: 1, name: "수량 초과 상품", price: 10000, imageUrl: "https://placehold.co/80x80", stock: 5 }];
+  const cartItems = [{ id: 1, productId: 1, quantity: 8 }];
+
+  it("체크박스와 수량 증가 버튼은 비활성화되고 감소 버튼은 활성화되며, 재고 수량이 포함된 안내 메시지가 표시된다", async () => {
+    server.use(...createHandlers(products, cartItems));
+    renderCartPage();
+
+    await screen.findByText("수량 초과 상품");
+    expect(screen.getByText("최대 구매 가능 수량이 5개 입니다.")).toBeInTheDocument();
+
+    const item = getItemContainer("수량 초과 상품");
+    const checkbox = within(item).getByRole("checkbox");
+    const [, decreaseButton, increaseButton] = within(item).getAllByRole("button");
+
+    expect(checkbox).toBeDisabled();
+    expect(increaseButton).toBeDisabled();
+    expect(decreaseButton).not.toBeDisabled();
+  });
+
+  it("감소 버튼을 눌러 재고 이내로 수량이 줄어들면 구매 가능 상태로 전환된다", async () => {
+    const user = userEvent.setup();
+    server.use(...createHandlers(products, cartItems));
+    renderCartPage();
+
+    await screen.findByText("수량 초과 상품");
+
+    const item = getItemContainer("수량 초과 상품");
+    const [, decreaseButton] = within(item).getAllByRole("button");
+
+    for (let i = 0; i < 3; i += 1) {
+      await user.click(decreaseButton);
+    }
+
+    await screen.findByText("5");
+    expect(screen.queryByText("최대 구매 가능 수량이 5개 입니다.")).not.toBeInTheDocument();
+
+    const updatedItem = getItemContainer("수량 초과 상품");
+    expect(within(updatedItem).getByRole("checkbox")).not.toBeDisabled();
+    const [, , increaseButton] = within(updatedItem).getAllByRole("button");
+    expect(increaseButton).not.toBeDisabled();
+  });
+
+  it("선택되어 있어도 결제 금액 계산과 주문 확인 버튼에서 제외된다", async () => {
+    server.use(...createHandlers(products, cartItems));
+    renderCartPage();
+
+    await screen.findByText("수량 초과 상품");
+    expect(within(screen.getByTestId("total-amount")).getByText("3,000원")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "주문 확인" })).toBeDisabled();
+  });
+});
+
+describe("최대 구매 가능 수량(99개) 도달", () => {
+  const products = [
+    { id: 1, name: "최대 수량 상품", price: 10000, imageUrl: "https://placehold.co/80x80", stock: 100 },
+  ];
+  const cartItems = [{ id: 1, productId: 1, quantity: 99 }];
+
+  it("수량이 99개에 도달하면 증가 버튼이 비활성화된다", async () => {
+    server.use(...createHandlers(products, cartItems));
+    renderCartPage();
+
+    await screen.findByText("최대 수량 상품");
+
+    const item = getItemContainer("최대 수량 상품");
+    const [, , increaseButton] = within(item).getAllByRole("button");
+
+    expect(increaseButton).toBeDisabled();
+  });
+});

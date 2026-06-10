@@ -1,14 +1,20 @@
 import { useState } from "react";
+import { updateCartItemQuantity } from "../apis/cart";
+import { useMyMutation } from "../lib/myQuery/useMyMutation";
+import { CART_QUERY_KEY } from "../constants/queryKeys";
 
 type Status = "idle" | "pending" | "error";
 
-export function useUpdateCartItemQuantity(onQuantityUpdate: (id: number, quantity: number) => Promise<void>) {
+export function useUpdateCartItemQuantity() {
   const [status, setStatus] = useState<Status>("idle");
+  const { mutate } = useMyMutation(CART_QUERY_KEY, ({ id, quantity }: { id: number; quantity: number }) =>
+    updateCartItemQuantity(id, quantity),
+  );
 
   const updateQuantity = async (id: number, quantity: number) => {
     setStatus("pending");
     try {
-      await onQuantityUpdate(id, quantity);
+      await mutate({ id, quantity });
       setStatus("idle");
     } catch {
       setStatus("error");

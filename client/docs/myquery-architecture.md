@@ -61,13 +61,13 @@ export class MyQueryClient {
         return this.queryCache.get(queryKey)?.state.data ?? null;
     }
 
-    getQueryState(queryKey: string): QueryState<unknown> {
+    getQueryState(queryKey: string): QueryState<unknown> | null {
         return this.queryCache.get(queryKey)?.state ?? null;
     }
 
     async fetchQuery(queryKey: string) {
         const queryRecord = this.queryCache.get(queryKey);
-        if (!queryRecord) return;
+        if (!queryRecord) return null;
 
         this.setQueryState(queryKey, {
             status: "loading",
@@ -77,6 +77,7 @@ export class MyQueryClient {
         try {
             const data = await queryRecord.queryFn();
             this.setQueryData(queryKey, data);
+            return data;
         } catch (error) {
             this.setQueryState(queryKey, {
                 status: "error",
@@ -86,13 +87,17 @@ export class MyQueryClient {
         }
     }
 
-    setQueryData(queryKey: string, data: unknown) {
+    setQueryData<T>(queryKey: string, dataOrUpdater: T | ((prevData: T | null) => T)) {
         const queryRecord = this.queryCache.get(queryKey)
         if (!queryRecord) return;
 
+        const nextData = typeof dataOrUpdater === "function"
+            ? dataOrUpdater(queryRecord.state.data)
+            : dataOrUpdater;
+
         queryRecord.state = {
             status: "success",
-            data,
+            data: nextData,
             error: null
         };
 
@@ -113,7 +118,7 @@ export class MyQueryClient {
 
     invalidate(queryKey: string) {
         // stale 처리 또는 refresh
-        this.fetchQuery(queryKey);
+        return this.fetchQuery(queryKey);
     }
 
     subscribe(queryKey: string, listener: () => void): () => void {
@@ -184,7 +189,7 @@ type mutationOptions = {
     onError: () => {};
     onSettled: () => {};
 }
-function useMyMutation(queryKey, mutationFn, options: mutationOptions) {
+function useMyMutation(queryKey, mutationFn, options: mutationOptions = {}) {
     const myQuery = useContext(MyQueryContext)
     if (!myQuery) {
         throw new Error("MyQueryProvider 안에서 사용해야 합니다.")
@@ -280,7 +285,7 @@ function useCartList() {
     const hasNoCartItem = !isLoading && cartList.length === 0;
     const hasCartItem = !isLoading && cartList.length > 0;
     const isAllSelected = cartList.length > 0 && cartList.every((item) => item.isSelected);
-    const isAbleToPurchase = !isLoading && cartList.some((item) => item.isSelected && item.status === "available");
+    const isAbleToPurchase = !isLoading && canPurchaseCart(cartList);
 
     const selectItem = (id: number) => {
         toggleItemSelection(id);
@@ -300,6 +305,7 @@ function useCartList() {
         hasCartItem,
         isAllSelected,
         isAbleToPurchase,
+        getItemSelection,
         selectItem,
         selectAllItem,
     }
@@ -320,6 +326,12 @@ function getCartSummary(cartList: CartItem[]) {
         shippingFee,
         totalAmount,
     }
+}
+
+function canPurchaseCart(cartList: CartItem[]): boolean {
+    const selectedCartItems = cartList.filter((item) => item.isSelected);
+
+    return selectedCartItems.length > 0 && selectedCartItems.every((item) => item.status === "available");
 }
 
 function createOrderSummary(cartList: CartItem[]): OrderSummary | null {
@@ -348,6 +360,8 @@ function useCartSubmit({refetchCart, getItemSelection}) {
             errorMsg: cartItemStatusMessage[item.status],
         }))
 
+        if (!canPurchaseCart(latestCartList)) return null;
+
         return createOrderSummary(latestCartList);
     }
 
@@ -361,11 +375,10 @@ function useCartSubmit({refetchCart, getItemSelection}) {
 function CartPage() {
     const { cartList, isLoading, hasError, hasNoCartItem,
         hasCartItem, isAllSelected, isAbleToPurchase,
-        selectItem, selectAllItem, refetch, } = useCartList();
-    const { selectedCartItems, orderAmount, shippingFee,
-        totalAmount } = useCartSummary(cartList);
+        getItemSelection, selectItem, selectAllItem, refetch, } = useCartList();
+    const { orderAmount, shippingFee, totalAmount } = getCartSummary(cartList);
 
-    const { submitCart } = useCartSubmit({ selectedCartItems, totalAmount, refetchCart: refetch,
+    const { submitCart } = useCartSubmit({ refetchCart: refetch, getItemSelection,
     });
 
     const handleSubmitCartForm = async () => {
@@ -434,19 +447,22 @@ function useOptimisticRemoveCartItem() {
     const queryClient = useMyQueryClient();
     const { mutate } = useMyMutation("/cart", ({ id }: {id: number}) => deleteCartItem(id), {
         onMutate: ({id}: {id: number}) => {
-            const cartList = queryClient.getQueryData<CartItem[]>("/cart") ?? [];
-            const deletedItem = cartList.find((item) => item.id === id);
+            const cartItems = queryClient.getQueryData<CartItemResponse[]>("/cart") ?? [];
+            const deletedItem = cartItems.find((item) => item.id === id);
 
-            queryClient.setQueryData<CartItem[]>("/cart", (cartList) => cartList.filter((item) => item.id !== id))
+            queryClient.setQueryData<CartItemResponse[]>("/cart", (cartItems) => cartItems.filter((item) => item.id !== id))
 
             return { deletedItem }
         },
         onError: (_error, _variables, context) => {
             if (!context?.deletedItem) return;
 
-            queryClient.setQueryData<CartItem[]>("/cart", (cartList) => [
-                ...cartList, context.deletedItem
+            queryClient.setQueryData<CartItemResponse[]>("/cart", (cartItems) => [
+                ...cartItems, context.deletedItem
             ])
+        },
+        onSuccess: (_result, {id}: {id: number}) => {
+            removeItemSelectionFromStorage(id);
         }
     });
 

@@ -1,25 +1,27 @@
 import { css } from "@emotion/react";
 import MinusIcon from "../../assets/minus.svg?react";
 import PlusIcon from "../../assets/plus.svg?react";
+import { useOptimisticRemoveCartItem } from "../../hooks/useOptimisticRemoveCartItem";
 import { useUpdateCartItemQuantity } from "../../hooks/useUpdateCartItemQuantity";
-import type { CartItem } from "../../types/cart";
+import { CART_ITEM_STATUS, type CartItem } from "../../types/cart";
+import { MAX_PURCHASE_QUANTITY, MIN_PURCHASE_QUANTITY } from "../../utils/cart";
 import Button from "../Button";
 import Checkbox from "../Checkbox";
 
 interface CartListItemProps {
   cartItem: CartItem;
   onSelect: (id: number) => void;
-  onDelete: (id: number) => void;
-  onQuantityUpdate: (id: number, quantity: number) => Promise<void>;
 }
 
 const formatPrice = (price: number) => price.toLocaleString("ko-KR") + "원";
 
-export default function CartListItem({ cartItem, onSelect, onDelete, onQuantityUpdate }: CartListItemProps) {
-  const { id, name, imageUrl, price, quantity, isSelected, isAvailable, errorMsg } = cartItem;
-  const isPurchaseDisabled = !isAvailable;
+export default function CartListItem({ cartItem, onSelect }: CartListItemProps) {
+  const { id, name, imageUrl, price, quantity, isSelected, status, errorMsg } = cartItem;
+  const isPurchaseDisabled = status !== CART_ITEM_STATUS.AVAILABLE;
+  const isOutOfStock = status === CART_ITEM_STATUS.OUT_OF_STOCK;
 
-  const { isPending, increaseCartItemQuantity, decreaseCartItemQuantity } = useUpdateCartItemQuantity(onQuantityUpdate);
+  const { isPending, increaseCartItemQuantity, decreaseCartItemQuantity } = useUpdateCartItemQuantity();
+  const { removeCartItem } = useOptimisticRemoveCartItem();
 
   const handleDecrease = () => decreaseCartItemQuantity(id, quantity);
   const handleIncrease = () => increaseCartItemQuantity(id, quantity);
@@ -28,7 +30,7 @@ export default function CartListItem({ cartItem, onSelect, onDelete, onQuantityU
     <div css={[containerStyle, isPurchaseDisabled && disabledStyle]}>
       <div css={topRowStyle}>
         <Checkbox checked={isSelected} disabled={isPurchaseDisabled} onChange={() => onSelect(id)} />
-        <Button variant="secondary" fit onClick={() => onDelete(id)}>
+        <Button variant="secondary" fit onClick={() => removeCartItem(id)}>
           삭제
         </Button>
       </div>
@@ -40,13 +42,21 @@ export default function CartListItem({ cartItem, onSelect, onDelete, onQuantityU
             <span className="typo-xl-b">{formatPrice(price)}</span>
           </div>
           <div css={quantityRowStyle}>
-            <Button variant="icon" onClick={handleDecrease} disabled={quantity === 1 || isPurchaseDisabled}>
+            <Button
+              variant="icon"
+              onClick={handleDecrease}
+              disabled={isPending || quantity <= MIN_PURCHASE_QUANTITY || isOutOfStock}
+            >
               <MinusIcon />
             </Button>
             <span className="typo-sm-r" css={quantityTextStyle}>
               {quantity}
             </span>
-            <Button variant="icon" onClick={handleIncrease} disabled={isPending || isPurchaseDisabled}>
+            <Button
+              variant="icon"
+              onClick={handleIncrease}
+              disabled={isPending || isPurchaseDisabled || quantity >= MAX_PURCHASE_QUANTITY}
+            >
               <PlusIcon />
             </Button>
             {errorMsg && (

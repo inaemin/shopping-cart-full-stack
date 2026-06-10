@@ -1,5 +1,6 @@
 import { css } from "@emotion/react";
 import type { CartItem } from "../../types/cart";
+import { getCartSummary } from "../../utils/cart";
 import CartOrderSummary from "../CartOrderSummary";
 import Checkbox from "../Checkbox";
 import CartListItem from "../CartListItem";
@@ -7,26 +8,13 @@ import CartListItem from "../CartListItem";
 interface CartListProps {
   cartList: CartItem[];
   isAllSelected: boolean;
-  orderAmount: number;
-  shippingFee: number;
-  totalAmount: number;
-  onDelete: (id: number) => void;
   onSelectItem: (id: number) => void;
   onSelectAllItems: () => void;
-  onQuantityUpdate: (id: number, quantity: number) => Promise<void>;
 }
 
-export default function CartList({
-  cartList,
-  isAllSelected,
-  orderAmount,
-  shippingFee,
-  totalAmount,
-  onDelete,
-  onSelectItem,
-  onSelectAllItems,
-  onQuantityUpdate,
-}: CartListProps) {
+export default function CartList({ cartList, isAllSelected, onSelectItem, onSelectAllItems }: CartListProps) {
+  const { orderAmount, shippingFee, totalAmount } = getCartSummary(cartList);
+
   return (
     <div css={containerStyle}>
       <div css={captionStyle}>
@@ -40,13 +28,7 @@ export default function CartList({
       <div css={scrollableStyle}>
         <div css={itemListStyle}>
           {cartList.map((cartItem) => (
-            <CartListItem
-              key={cartItem.id}
-              cartItem={cartItem}
-              onSelect={onSelectItem}
-              onDelete={onDelete}
-              onQuantityUpdate={onQuantityUpdate}
-            />
+            <CartListItem key={cartItem.id} cartItem={cartItem} onSelect={onSelectItem} />
           ))}
         </div>
         <CartOrderSummary orderAmount={orderAmount} shippingFee={shippingFee} totalAmount={totalAmount} />

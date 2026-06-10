@@ -7,7 +7,8 @@ import EmptyCartList from "../components/EmptyCartList";
 import ErrorList from "../components/ErrorList";
 import Header from "../components/Header";
 import SkeletonList from "../components/SkeletonList";
-import { useCartForm } from "../hooks/useCartForm";
+import { useCartList } from "../hooks/useCartList";
+import { useCartSubmit } from "../hooks/useCartSubmit";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -17,17 +18,15 @@ export default function CartPage() {
     hasError,
     hasNoCartItem,
     hasCartItem,
-    orderAmount,
-    shippingFee,
-    totalAmount,
     isAllSelected,
     isAbleToPurchase,
-    deleteCartItem,
-    toggleItemSelection,
-    toggleAllItemSelection,
-    handleUpdateCartItemQuantity,
-    submitCart,
-  } = useCartForm();
+    getItemSelection,
+    selectItem,
+    selectAllItem,
+    refetch,
+  } = useCartList();
+
+  const { submitCart } = useCartSubmit({ refetchCart: refetch, getItemSelection });
 
   const handleSubmitCart = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -52,13 +51,8 @@ export default function CartPage() {
             <CartList
               cartList={cartList}
               isAllSelected={isAllSelected}
-              orderAmount={orderAmount}
-              shippingFee={shippingFee}
-              totalAmount={totalAmount}
-              onSelectItem={toggleItemSelection}
-              onDelete={deleteCartItem}
-              onSelectAllItems={toggleAllItemSelection}
-              onQuantityUpdate={handleUpdateCartItemQuantity}
+              onSelectItem={selectItem}
+              onSelectAllItems={selectAllItem}
             />
           </form>
         )}

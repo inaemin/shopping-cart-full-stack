@@ -9,7 +9,7 @@ import { UpdateCartItemDto } from "../interfaces/cart.interface.js";
 
 export async function getCartItems(_request: Request, response: Response): Promise<void> {
   const cartItemList = await fetchCartItems();
-  response.status(200).json(cartItemList);
+  response.status(200).json({ data: cartItemList });
 }
 
 export async function updateCartItemQuantity(request: Request, response: Response): Promise<void> {

@@ -1,6 +1,6 @@
 import request from "supertest";
 import app from "../../../src/app.js";
-import { reset, saveNewItem } from "../../../src/repositories/cart.repository.js";
+import { reset, saveNewItem, findAll } from "../../../src/repositories/cart.repository.js";
 import { reset as resetProducts } from "../../../src/repositories/products.repository.js";
 
 const validProduct = {
@@ -18,22 +18,23 @@ describe("PATCH /cart/:id", () => {
 
   it("유효한 요청이면 204 No Content와 빈 응답을 반환한다.", async () => {
     await request(app).post("/products").send(validProduct).expect(201);
-    saveNewItem({ productId: 1, quantity: 1 });
+    const { body: products } = await request(app).get("/products").expect(200);
+    saveNewItem({ productId: products[0].id, quantity: 1 });
     const { body: cartItems } = await request(app).get("/cart").expect(200);
-    const id = cartItems[0].id;
+    const id = cartItems.data[0].id;
 
     const response = await request(app).patch(`/cart/${id}`).send({ quantity: 2 });
     expect(response.status).toBe(204);
     expect(response.text).toBe("");
   });
 
-  it("수량이 현재 재고보다 많으면 409 Conflict를 반환한다.", async () => {
+  it("요청 수량이 재고보다 많고 기존 수량보다도 많으면 409 Conflict를 반환한다.", async () => {
     await request(app).post("/products").send(validProduct).expect(201);
     const { body: products } = await request(app).get("/products").expect(200);
     saveNewItem({ productId: products[0].id, quantity: 1 });
     const { body: cartItems } = await request(app).get("/cart").expect(200);
     const response = await request(app)
-      .patch(`/cart/${cartItems[0].id}`)
+      .patch(`/cart/${cartItems.data[0].id}`)
       .send({ quantity: validProduct.stock + 1 });
 
     expect(response.status).toBe(409);
@@ -41,6 +42,18 @@ describe("PATCH /cart/:id", () => {
       code: "OUT_OF_STOCK",
       message: "요청한 수량이 현재 재고보다 많습니다.",
     });
+  });
+
+  it("요청 수량이 재고보다 많아도 기존 수량보다 작은 경우(줄이는 요청)에는 204를 반환한다.", async () => {
+    await request(app).post("/products").send(validProduct).expect(201);
+    const { body: products } = await request(app).get("/products").expect(200);
+    saveNewItem({ productId: products[0].id, quantity: validProduct.stock + 2 });
+    const { body: cartItems } = await request(app).get("/cart").expect(200);
+    const response = await request(app)
+      .patch(`/cart/${cartItems.data[0].id}`)
+      .send({ quantity: validProduct.stock + 1 });
+
+    expect(response.status).toBe(204);
   });
 
   it("존재하지 않는 장바구니 상품이면 404 Not Found를 반환한다.", async () => {
@@ -55,8 +68,8 @@ describe("PATCH /cart/:id", () => {
 
   it("장바구니 상품이 삭제된 상품이면 404 Not Found를 반환한다.", async () => {
     saveNewItem({ productId: 1, quantity: 1 });
-    const { body: cartItems } = await request(app).get("/cart").expect(200);
-    const id = cartItems[0].id;
+    const [item] = await findAll();
+    const id = item.id;
 
     const response = await request(app).patch(`/cart/${id}`).send({ quantity: 2 });
     expect(response.status).toBe(404);
@@ -82,8 +95,8 @@ describe("PATCH /cart/:id", () => {
     ["quantity가 1보다 작으면", { quantity: 0 }, "INVALID_CART_ITEM_QUANTITY"],
   ])("%s 400 Bad Request를 반환한다.", async (_caseName, body, code) => {
     saveNewItem({ productId: 1, quantity: 1 });
-    const { body: cartItems } = await request(app).get("/cart").expect(200);
-    const id = cartItems[0].id;
+    const [item] = await findAll();
+    const id = item.id;
 
     const response = await request(app).patch(`/cart/${id}`).send(body);
 

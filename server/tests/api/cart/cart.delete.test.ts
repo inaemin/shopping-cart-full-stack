@@ -1,6 +1,6 @@
 import request from "supertest";
 import app from "../../../src/app.js";
-import { reset, saveNewItem } from "../../../src/repositories/cart.repository.js";
+import { reset, saveNewItem, findAll } from "../../../src/repositories/cart.repository.js";
 
 describe("DELETE /cart/:id", () => {
   beforeEach(() => {
@@ -9,8 +9,8 @@ describe("DELETE /cart/:id", () => {
 
   it("존재하는 장바구니 상품을 삭제하면 204 No Content와 빈 응답을 반환한다.", async () => {
     saveNewItem({ productId: 1, quantity: 2 });
-    const { body: cartItems } = await request(app).get("/cart").expect(200);
-    const id = cartItems[0].id;
+    const [item] = await findAll();
+    const id = item.id;
 
     const response = await request(app).delete(`/cart/${id}`);
 

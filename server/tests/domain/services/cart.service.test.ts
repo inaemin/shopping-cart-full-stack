@@ -1,5 +1,5 @@
 import { updateCartItemQuantity, deleteCartItem, getCartItems } from "../../../src/services/cart.service.js";
-import { reset as resetCart, saveNewItem } from "../../../src/repositories/cart.repository.js";
+import { reset as resetCart, saveNewItem, findAll } from "../../../src/repositories/cart.repository.js";
 import { reset as resetProducts, save as saveProduct } from "../../../src/repositories/products.repository.js";
 import { AppError } from "../../../src/errors/AppError.js";
 
@@ -17,10 +17,44 @@ describe("cart.service", () => {
   });
 
   describe("getCartItems", () => {
-    it("장바구니 목록을 반환한다.", async () => {
+    it("장바구니 목록을 상품 정보와 함께 반환한다.", async () => {
+      saveProduct(validProduct);
       saveNewItem({ productId: 1, quantity: 2 });
+
       const items = await getCartItems();
-      expect(items).toHaveLength(1);
+
+      expect(items).toEqual([
+        {
+          id: expect.any(Number),
+          name: validProduct.name,
+          price: validProduct.price,
+          quantity: 2,
+          stock: validProduct.stock,
+          status: "available",
+          imageUrl: validProduct.imageUrl,
+        },
+      ]);
+    });
+
+    it("장바구니 항목의 상품이 삭제된 경우 해당 항목은 제외하고 반환한다.", async () => {
+      saveNewItem({ productId: 9999, quantity: 1 });
+
+      const items = await getCartItems();
+
+      expect(items).toEqual([]);
+    });
+
+    it.each([
+      ["재고가 0이면", 0, 1, "outOfStock"],
+      ["장바구니 수량이 재고보다 많으면", 3, 5, "quantityExceeded"],
+      ["장바구니 수량이 재고 이하면", 5, 3, "available"],
+    ])("%s status가 %s로 계산된다.", async (_caseName, stock, quantity, expectedStatus) => {
+      saveProduct({ ...validProduct, stock });
+      saveNewItem({ productId: 1, quantity });
+
+      const [item] = await getCartItems();
+
+      expect(item.status).toBe(expectedStatus);
     });
   });
 
@@ -28,7 +62,7 @@ describe("cart.service", () => {
     it("유효한 요청이면 정상 완료된다.", async () => {
       saveProduct(validProduct);
       saveNewItem({ productId: 1, quantity: 1 });
-      const [item] = await getCartItems();
+      const [item] = await findAll();
       await expect(updateCartItemQuantity(item.id, 5)).resolves.not.toThrow();
     });
 
@@ -39,24 +73,31 @@ describe("cart.service", () => {
 
     it("장바구니 항목의 상품이 삭제된 경우 PRODUCT_NOT_FOUND AppError를 던진다.", async () => {
       saveNewItem({ productId: 9999, quantity: 1 });
-      const [item] = await getCartItems();
+      const [item] = await findAll();
       await expect(updateCartItemQuantity(item.id, 1)).rejects.toMatchObject({ code: "PRODUCT_NOT_FOUND" });
     });
 
-    it("요청 수량이 재고보다 많으면 OUT_OF_STOCK AppError를 던진다.", async () => {
+    it("요청 수량이 재고보다 많고 기존 수량보다도 많으면 OUT_OF_STOCK AppError를 던진다.", async () => {
       saveProduct(validProduct);
       saveNewItem({ productId: 1, quantity: 1 });
-      const [item] = await getCartItems();
+      const [item] = await findAll();
       await expect(updateCartItemQuantity(item.id, validProduct.stock + 1)).rejects.toMatchObject({
         code: "OUT_OF_STOCK",
       });
+    });
+
+    it("요청 수량이 재고보다 많아도 기존 수량보다 작으면(줄이는 요청) 정상 완료된다.", async () => {
+      saveProduct(validProduct);
+      saveNewItem({ productId: 1, quantity: validProduct.stock + 2 });
+      const [item] = findAll();
+      await expect(updateCartItemQuantity(item.id, validProduct.stock + 1)).resolves.not.toThrow();
     });
   });
 
   describe("deleteCartItem", () => {
     it("존재하는 항목을 삭제하면 정상 완료된다.", async () => {
       saveNewItem({ productId: 1, quantity: 1 });
-      const [item] = await getCartItems();
+      const [item] = await findAll();
       await expect(deleteCartItem(item.id)).resolves.not.toThrow();
     });
 

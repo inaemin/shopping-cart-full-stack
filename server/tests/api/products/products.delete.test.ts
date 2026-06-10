@@ -36,7 +36,7 @@ describe("DELETE /products/:id", () => {
     await request(app).delete(`/products/${productId}`).expect(204);
 
     const { body: cartItems } = await request(app).get("/cart");
-    expect(cartItems).not.toContainEqual(expect.objectContaining({ productId }));
+    expect(cartItems.data).toEqual([]);
   });
 
   it("존재하지 않는 상품을 삭제하면 404 Not Found를 반환한다.", async () => {

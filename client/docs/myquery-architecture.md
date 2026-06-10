@@ -4,7 +4,7 @@ const MyQueryContext = createContext(null);
 
 export function MyQueryProvider({children}) {
     return (
-        <MyQueryContext.Provider value={{ myQueryClient }}>
+        <MyQueryContext.Provider value={myQueryClient}>
             {children}
         </MyQueryContext.Provider>
     )
@@ -191,19 +191,19 @@ function useMyMutation(queryKey, mutationFn, options: mutationOptions) {
     }
 
     // 여기서 myqueryclient의 querykey를 invalidate 하고, 데이터 조작 api를 날림.
-    const mutate = async (...args) => {
+    const mutate = async (variables) => {
         let context; // 복구용 정보
 
         try {
-            context = options.onMutate?.(args);
-            const result = await mutationFn(args);
-            options.onSuccess?.(result, args, context);
+            context = options.onMutate?.(variables);
+            const result = await mutationFn(variables);
+            options.onSuccess?.(result, variables, context);
             return result;
         } catch (error) {
-            options.onError?.(error, args, context)
+            options.onError?.(error, variables, context)
             throw error;
         } finally {
-            options.onSettled?.(args, context);
+            options.onSettled?.(variables, context);
             myQuery.invalidate(queryKey); // 쿼리키 무효화
         }
     }
@@ -217,75 +217,140 @@ function useMyMutation(queryKey, mutationFn, options: mutationOptions) {
 ```useCartQuery
 function useCartQuery() {
     const {isLoading, hasError, data, error, refetch} = useMyQuery("cart", getCart)
-    const {selectionMap, addToSelectionMap, removeFromSelectionMap, toggleItemSelection, toggleAllItemSelection} = useCartSelection();
-
-    const toCartItem = (data): CartItem => {
-        const newData = {
-            ...data,
-            isSelected: selectionMap[data.id] ?? addToSelectionMap(data.id),
-        }
-        return {...newData}
-    }
-
-    const [cartList, setCartList] = useState<CartItem[] | null>(() => data.map(toCartItem))
-
-    const hasNoCartItem = !isLoading && cartList && cartList.length === 0
-    const hasCartItem = !isLoading && cartList && cartList.length !== 0
-    const isAllSelected = cartList.every(item => item.isSelected);
-    const isAbleToPurchase =
-
-    const selectItem = (id) => {
-        toggleItemSelection(id)
-    }
-
-    const selectAllItem = () => {
-        const shouldSelectAll = !isAllSelected;
-        toggleAllItemSelection(shouldSelectAll)
-    }
 
     return {
-        isLoading, hasError, hasNoCartItem, hasCartItem, isAllSelected, isAbleToPurchase, selectItem, selectAllItem, cartList
+        cartItems: data ?? [],
+        isLoading,
+        hasError,
+        error,
+        refetch,
     }
 }
 ```
 
 ```useCartSelection
 function useCartSelection() {
-    const [selectionMap, setSelectionMap] = useState<Record<number, boolean>>({});
+    const [selectionMap, setSelectionMap] = useState<Record<number, boolean>>(() => getItemSelectionFromStorage());
 
-    const addToSelectionMap = (): boolean => {
-
+    const getItemSelection = (id: number): boolean => {
+        return selectionMap[id] ?? true;
     }
 
-    const removeFromSelectionMap = () => {
-
+    const removeFromSelectionMap = (id: number) => {
+        removeItemSelectionFromStorage(id);
+        setSelectionMap((prev) => {
+            const next = {...prev};
+            delete next[id];
+            return next;
+        })
     }
 
-    const toggleItemSelection = (id) => {
-
+    const toggleItemSelection = (id: number) => {
+        const nextSelected = !getItemSelection(id);
+        saveItemSelectionToStorage(id, nextSelected);
+        setSelectionMap((prev) => ({...prev, [id]: nextSelected}))
     }
 
-    const toggleAllItemSelection = () => {
-
+    const toggleAllItemSelection = (ids: number[], shouldSelectAll: boolean) => {
+        ids.forEach((id) => saveItemSelectionToStorage(id, shouldSelectAll));
+        setSelectionMap((prev) => {
+            const next = {...prev};
+            ids.forEach((id) => {
+                next[id] = shouldSelectAll;
+            })
+            return next;
+        })
     }
 
-    return {selectionMap, addToSelectionMap, removeFromSelectionMap, toggleItemSelection, toggleAllItemSelection}
+    return {selectionMap, getItemSelection, removeFromSelectionMap, toggleItemSelection, toggleAllItemSelection}
+}
+```
+
+```useCartList
+function useCartList() {
+    const {cartItems, isLoading, hasError, refetch} = useCartQuery();
+    const {getItemSelection, toggleItemSelection, toggleAllItemSelection} = useCartSelection();
+
+    const cartList = cartItems.map((item): CartItem => ({
+        ...item,
+        isSelected: getItemSelection(item.id),
+        errorMsg: cartItemStatusMessage[item.status],
+    }))
+
+    const hasNoCartItem = !isLoading && cartList.length === 0;
+    const hasCartItem = !isLoading && cartList.length > 0;
+    const isAllSelected = cartList.length > 0 && cartList.every((item) => item.isSelected);
+    const isAbleToPurchase = !isLoading && cartList.some((item) => item.isSelected && item.status === "available");
+
+    const selectItem = (id: number) => {
+        toggleItemSelection(id);
+    }
+
+    const selectAllItem = () => {
+        const shouldSelectAll = !isAllSelected;
+        toggleAllItemSelection(cartList.map((item) => item.id), shouldSelectAll);
+    }
+
+    return {
+        cartList,
+        isLoading,
+        hasError,
+        refetch,
+        hasNoCartItem,
+        hasCartItem,
+        isAllSelected,
+        isAbleToPurchase,
+        selectItem,
+        selectAllItem,
+    }
+}
+
+```
+
+```useCartSummary -> utils/cart.ts로 분리
+function getCartSummary(cartList: CartItem[]) {
+    const selectedCartItems = cartList.filter((item) => item.isSelected && item.status === "available");
+    const orderAmount = selectedCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const shippingFee = calculateShippingFee(orderAmount);
+    const totalAmount = orderAmount + shippingFee;
+
+    return {
+        selectedCartItems,
+        orderAmount,
+        shippingFee,
+        totalAmount,
+    }
+}
+
+function createOrderSummary(cartList: CartItem[]): OrderSummary | null {
+    const {selectedCartItems, totalAmount} = getCartSummary(cartList);
+
+    if (selectedCartItems.length === 0) return null;
+
+    return {
+        cartItemCount: selectedCartItems.length,
+        totalQuantity: selectedCartItems.reduce((sum, item) => sum + item.quantity, 0),
+        totalAmount,
+    }
 }
 
 ```
 
 ```useCartSubmit
-function useCartSubmit() {
-    validateCartForm() {
+function useCartSubmit({refetchCart, getItemSelection}) {
+    const submitCart = async () => {
+        const latestCartItems = await refetchCart();
+        if (!latestCartItems) return null;
 
+        const latestCartList = latestCartItems.map((item): CartItem => ({
+            ...item,
+            isSelected: getItemSelection(item.id),
+            errorMsg: cartItemStatusMessage[item.status],
+        }))
+
+        return createOrderSummary(latestCartList);
     }
 
-    submitCart() {
-        const isValid = validateCartForm();
-        if (!isValid) return;
-
-        return orderSummary
-    }
     return {
         submitCart
     }
@@ -294,21 +359,42 @@ function useCartSubmit() {
 
 ```CartPage
 function CartPage() {
-    const { isLoading, hasError, hasNoCartItem, hasCartItem, isAllSelected, selectItem, selectAllItem, cartList } = useCartQuery()
-    const { submitCart } = useCartSubmit(cartList)
+    const { cartList, isLoading, hasError, hasNoCartItem,
+        hasCartItem, isAllSelected, isAbleToPurchase,
+        selectItem, selectAllItem, refetch, } = useCartList();
+    const { selectedCartItems, orderAmount, shippingFee,
+        totalAmount } = useCartSummary(cartList);
 
-    const handleSubmitCartForm = () => {
+    const { submitCart } = useCartSubmit({ selectedCartItems, totalAmount, refetchCart: refetch,
+    });
+
+    const handleSubmitCartForm = async () => {
         const orderSummary = await submitCart();
         navigate('/order-confirm', state: orderSummary)
     }
 
-    return
+    return (
+        <>
+            <CartList cartList={cartList} isAllSelected={isAllSelected} onSelectItem={selectItem} onSelectAllItems={selectAllItem} />
+            <CartOrderSummary orderAmount={orderAmount} shippingFee={shippingFee}
+        totalAmount={totalAmount} />
+        </>
+    )
     ...
 }
 ```
 
-```CartItem
-function CartItem() {
+```CartList
+function CartList({ cartList, isAllSelected, onSelectItem, onSelectAllItems }) {
+
+    return ...
+}
+```
+
+```CartListItem
+function CartListItem({ cartItem, onSelect }) {
+    const { isPending, increaseCartItemQuantity, decreaseCartItemQuantity } = useUpdateCartItemQuantity()
+    const { removeCartItem } = useOptimisticRemoveCartItem()
 
     return ...
 }

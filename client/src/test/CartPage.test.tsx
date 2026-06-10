@@ -212,7 +212,7 @@ describe("수량 변경", () => {
     expect(increaseButton).not.toBeDisabled();
   });
 
-  it("재고 초과 수량 요청 시 에러 메시지가 표시된다", async () => {
+  it("재고 초과 수량 요청은 실패하고 수량이 그대로 유지된다", async () => {
     const user = userEvent.setup();
     // 재고 부족 상품: stock 1, quantity 1 → + 누르면 409
     renderCartPage();
@@ -222,7 +222,38 @@ describe("수량 변경", () => {
     const increaseButton = within(item).getAllByRole("button").at(-1)!;
     await user.click(increaseButton);
 
-    expect(await screen.findByText("요청한 수량이 현재 재고보다 많습니다.")).toBeInTheDocument();
+    await screen.findByText("재고 부족 상품");
+    expect(within(item).getByText("1")).toBeInTheDocument();
+    expect(within(item).getByText("재고가 얼마 남지 않았습니다. (구매 가능 수량 1개)")).toBeInTheDocument();
+  });
+
+  it("수량 증가로 재고가 얼마 남지 않으면 안내 메시지가 나타나고, 다시 감소하면 사라진다", async () => {
+    const user = userEvent.setup();
+    const products = [{ id: 1, name: "재고 임박 상품", price: 10000, imageUrl: "https://placehold.co/80x80", stock: 6 }];
+    const cartItems = [{ id: 1, productId: 1, quantity: 2 }];
+    server.use(...createHandlers(products, cartItems));
+    renderCartPage();
+
+    await screen.findByText("재고 임박 상품");
+    const item = getItemContainer("재고 임박 상품");
+    const [, , increaseButton] = within(item).getAllByRole("button");
+
+    expect(screen.queryByText(/재고가 얼마 남지 않았습니다/)).not.toBeInTheDocument();
+
+    await user.click(increaseButton);
+    await screen.findByText("3");
+
+    await user.click(increaseButton);
+    await screen.findByText("4");
+    expect(screen.getByText("재고가 얼마 남지 않았습니다. (구매 가능 수량 6개)")).toBeInTheDocument();
+
+    const [, decreaseButton] = within(getItemContainer("재고 임박 상품")).getAllByRole("button");
+    await user.click(decreaseButton);
+    await screen.findByText("3");
+
+    await user.click(decreaseButton);
+    await screen.findByText("2");
+    expect(screen.queryByText(/재고가 얼마 남지 않았습니다/)).not.toBeInTheDocument();
   });
 });
 

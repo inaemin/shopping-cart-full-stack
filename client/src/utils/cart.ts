@@ -5,6 +5,7 @@ const FREE_SHIPPING_THRESHOLD = 100_000;
 const SHIPPING_FEE = 3_000;
 export const MIN_PURCHASE_QUANTITY = 1;
 export const MAX_PURCHASE_QUANTITY = 99;
+const LOW_STOCK_THRESHOLD = 3;
 
 const CART_SELECTION_KEY = "cart_selection";
 
@@ -35,13 +36,16 @@ export const calculateShippingFee = (orderAmount: number) => {
   return orderAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
 };
 
-export function getCartItemStatusMessage(status: CartItemStatus, stock: number): string | undefined {
+export function getCartItemStatusMessage(status: CartItemStatus, stock: number, quantity: number): string | undefined {
   switch (status) {
     case CART_ITEM_STATUS.OUT_OF_STOCK:
       return "품절된 상품입니다.";
     case CART_ITEM_STATUS.QUANTITY_EXCEEDED:
       return `최대 구매 가능 수량이 ${Math.min(stock, MAX_PURCHASE_QUANTITY)}개 입니다.`;
     case CART_ITEM_STATUS.AVAILABLE:
+      if (stock - quantity <= LOW_STOCK_THRESHOLD) {
+        return `재고가 얼마 남지 않았습니다. (구매 가능 수량 ${stock}개)`;
+      }
       return undefined;
   }
 }
@@ -56,7 +60,7 @@ export function toCartItem(item: CartItemResponse, isSelected: boolean): CartIte
     stock: item.stock,
     status: item.status,
     isSelected,
-    errorMsg: getCartItemStatusMessage(item.status, item.stock),
+    errorMsg: getCartItemStatusMessage(item.status, item.stock, item.quantity),
   };
 }
 

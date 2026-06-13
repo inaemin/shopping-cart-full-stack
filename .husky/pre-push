@@ -1,4 +1,10 @@
-changed_files=$(git diff origin/$(git rev-parse --abbrev-ref HEAD)..HEAD --name-only 2>/dev/null)
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
+  changed_files=$(git diff "origin/$branch"..HEAD --name-only)
+else
+  changed_files=$(git diff "$(git merge-base HEAD main)"..HEAD --name-only)
+fi
 
 if echo "$changed_files" | grep -q '^server/'; then
   (cd server && npm run check) || exit 1

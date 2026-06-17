@@ -1,6 +1,6 @@
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router";
-import { ROUTES } from "../constants/routes";
+import { buildPath, ROUTES } from "../constants/routes";
 import Button from "../components/Button";
 import CartList from "../components/CartList";
 import EmptyCartList from "../components/EmptyCartList";
@@ -30,10 +30,10 @@ export default function CartPage() {
 
   const handleSubmitCart = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const orderSummary = await submitCart();
-    if (!orderSummary) return;
+    const checkoutId = await submitCart();
+    if (!checkoutId) return;
 
-    navigate(ROUTES.ORDER_CONFIRM, { state: orderSummary });
+    navigate(buildPath(ROUTES.CHECKOUT, { checkoutId }));
   };
 
   return (

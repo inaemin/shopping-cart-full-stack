@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { deleteCartItem } from "../apis/cart";
-import type { CartItemResponse } from "../apis/schema";
+import type { CartItemResponse } from "../apis/cartSchema";
 import { MyQueryContext } from "../lib/myQuery/MyQueryContext";
 import { useMyMutation } from "../lib/myQuery/useMyMutation";
 import { CART_QUERY_KEY } from "../constants/queryKeys";

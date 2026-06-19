@@ -18,28 +18,45 @@
 - couponDiscount
 - shippingFee
 - totalAmount
-- updateRemoteArea
-- updateAppliedCoupon
+- remoteArea
+- refetch
 - cancelCheckout
 - submitCheckout
 
+### useUpdateCheckout
+
+- updateRemoteArea
+- updateAppliedCoupon
+- pending: isUpdating
+
+### useBlocker
+
+- 결제 성공 전 다른 path로 이동하려고 하면 blocked
+- blocked 상태가 되면 `cancelCheckout` 호출 후 `blocker.proceed()`
+- 결제 성공 시에는 `isSuccessfullyPaidRef`를 true로 바꿔서 cancelCheckout 방지
+
 ### useEffect
 
-- 언마운트시 `cancelCheckout` 호출
+- blocker.state가 blocked일 때 `cancelCheckout` 호출
 
 ### states
 
 - [isCouponModalOpened, setCouponModalOpened] = useState(false)
+
+### refs
+
+- isSuccessfullyPaidRef = useRef(false)
 
 ### functions
 
 - handleToggleRemoteArea
 - handleCloseModal
 - handleApplyCoupon(selectedCouponIds)
-  - updateAppliedCoupon(selectedCouponIds)
+  - await updateAppliedCoupon(selectedCouponIds)
   - handleCloseModal
 - handleSubmitCheckout
   - submitCheckout
+  - isSuccessfullyPaidRef.current = true
   - navigate.to "/order-success"
     - state에 response 넣어줌
     - 다음페이지로 replace
@@ -52,30 +69,30 @@
 </Header>
 <main>
     <h1>주문 확인</h1>
+    {isLoading && <SkeletonList />}
+    {hasError && <ErrorList onRetry={refetch} />}
     <p>
         총 {}종류의 상품 {}개를 주문합니다.</br>
         최종 결제 금액을 확인해 주세요.
     </p>
 
-    {CheckoutItems.map(item => <CheckoutItem {...item} />)}
+    {CheckoutItems.map(item => <CheckoutItem item={item} />)}
 
     <div css={}>
-        <Button variant="secondary">
+        <Button variant="secondary" disabled={isUpdating}>
             <span className="">쿠폰 적용</span>
         </Button>
     </div>
 
     <h3>배송 정보</h3>
-    <CheckBox /> 제주도 및 도서 산간 지역
-
-    <InfoIcon /> 총 주문 금액이 {getFreeShippingPolicy()}원 이상일 경우 무료 배송됩니다.
+    <CheckBox checked={remoteArea} disabled={isUpdating} /> 제주도 및 도서 산간 지역
 
     <CheckoutSummary>
 
-    <CouponModal couponList initialCouponDiscount onApplyCoupon onClose /> // 쿠폰선택모달
+    <CouponModal checkoutId couponList initialCouponDiscount onApplyCoupon onClose /> // 쿠폰선택모달
 </main>
 <footer>
-    <Button>
+    <Button disabled={!isLoaded}>
         <span className="">결제하기</span>
     </Button>
 </footer>
@@ -84,7 +101,7 @@
 ## OrderSuccessPage
 
 - navigate state를 검사해서 없으면 장바구니 페이지로 돌아감
-- item_count, total_quantity, total_amount
+- itemCount, totalQuantity, totalAmount
 
 # Components
 
@@ -96,6 +113,7 @@
 
 ### props
 
+- checkoutId: number
 - couponList: Coupon[]
 - initialCouponDiscount: number
 - onApplyCoupon: (selectedCouponIds: number[]) => void
@@ -104,11 +122,14 @@
 ### variables
 
 - initialCouponIds = couponList.filter((coupon) => coupon.isSelected).map(coupon => coupon.id)
-- MAX_COUPON_COUNT = 2 // 최대 선택 가능 쿠폰 수 (상수)
+
+### useCouponPolicy
+
+- { maxCouponCount }
 
 ### useCalculateCoupon
 
-- {isPending, isDirty, selectedCouponIds, toggleCouponCheckBox, estimatedCouponDiscount } = useCalculateCoupon(initialCouponIds, initialCouponDiscount)
+- {isPending, isDirty, selectedCouponIds, toggleCouponCheckBox, estimatedCouponDiscount } = useCalculateCoupon(checkoutId, initialCouponIds, initialCouponDiscount)
 
 ### functions
 
@@ -116,7 +137,7 @@
   - selectedCouponIds에 coupon.id가 포함되어있다면 true
   - 아님 false
 - isCouponDisabled():
-  - selectedCouponIds에 포함되어있지 않으면서 selectedCouponIds.length가 이미 MAX_COUPON_COUNT라면 비활성화
+  - selectedCouponIds에 포함되어있지 않으면서 selectedCouponIds.length가 이미 maxCouponCount라면 비활성화
   - 이미 쿠폰 데이터에서 disabled 되어있다면 비활성화
 - handleApplyCoupon():
   - onApplyCoupon(selectedCouponIds)
@@ -131,12 +152,12 @@
         <Modal.CloseButton onClick={onClose}>
     </Modal.Header>
     <Modal.Main>
-    <p><InfoIcon/> 쿠폰은 최대 {MAX_COUPON_COUNT}개까지 사용할 수 있습니다.</p>
+    <p><InfoIcon/> 쿠폰은 최대 {maxCouponCount}개까지 사용할 수 있습니다.</p>
     {couponList.map(<CouponItem coupon={coupon} isChecked disabled onChange />)}
     </Modal.Main>
     <Modal.Footer>
         <Button disabled={isPending || !isDirty} onClick={handleApplyCoupon}>
-            <span>총 {estimatedCouponDiscount}원 할인 쿠폰 사용하기</span>
+            {isPending ? <Loader /> : <span>총 {estimatedCouponDiscount}원 할인 쿠폰 사용하기</span>}
         </Button>
     </Modal.Footer>
 </Modal>
@@ -154,19 +175,22 @@
 #### views
 
 ```
-<div>
-    <label>
-        <CheckBox checked={isChecked} onChange={onChange}/> <span>{coupon.name}</span>
-        {coupon.expiredDate && (<span>만료일: {coupon.expiredDate}</span>)}
-        {coupon.minOrderAmount && (<span>최소 주문 금액: {couponMinOrderAmount}</span>)}
-        {coupon.usableStartAt && coupon.usableEndAt && (<span>사용 가능 시간: {coupon.usableStartAt}부터 {coupon.usableEndAt}까지</span>)}
-    </label>
+<div onClick={handleClick} aria-disabled={disabled}>
+    <CheckBox checked={isChecked} disabled={disabled} readOnly> <span>{coupon.name}</span>
+    </CheckBox>
+    {couponMetaList.map(meta => <span>{meta}</span>)}
 </div>
 ```
 
 ## Modal
 
 > Modal 고유의 기능만을 담은 하위 컴포넌트들만 만들 예정.
+
+### props
+
+- width = "auto"
+- height = "auto"
+- onDimmedClick
 
 ### Modal.Header
 
@@ -243,6 +267,7 @@
 #### props
 
 - src
+- alt
 
 ### Item.Stepper
 
@@ -251,6 +276,8 @@
 - onDecrease()
 - onIncrease()
 - value
+- decreaseDisabled
+- increaseDisabled
 
 ### Item.TextXl
 
@@ -275,6 +302,22 @@
 >
 > - DELETE(cancel): 페이지를 이탈하며 checkout 자체가 삭제됨. 재요청하면 404 → invalidate 불필요(오히려 위험)
 > - POST(payment): 응답 body(item_count/total_quantity/total_amount)를 navigate state로 받아 `/order-success`로 넘김. 이 checkout으로 돌아오지 않음(replace) → invalidate 불필요
+> - POST(payment)는 현재 checkout의 `remoteArea`, 선택된 couponIds를 같이 보낸다.
+
+### export values
+
+- isLoading
+- hasError
+- checkoutItemList
+- couponList
+- orderAmount
+- couponDiscount
+- shippingFee
+- totalAmount
+- remoteArea
+- refetch
+- cancelCheckout
+- submitCheckout
 
 ## useUpdateCheckout
 
@@ -290,10 +333,10 @@
 
 ### useMyMutation(queryKey, mutationFn)
 
-> mutationFn은 apis/checkout.ts의 함수를 그대로 전달한다. (별도 래퍼 이름을 만들지 않음)
+> mutationFn은 apis/checkout.ts의 함수에 checkoutId를 함께 넘기는 형태로 만든다.
 
-- useMyMutation(checkoutQueryKey(checkoutId), updateCheckoutAddress)
-- useMyMutation(checkoutQueryKey(checkoutId), updateCheckoutCoupons)
+- useMyMutation(checkoutQueryKey(checkoutId), (isRemoteArea) => updateCheckoutAddress(checkoutId, isRemoteArea))
+- useMyMutation(checkoutQueryKey(checkoutId), (selectedCouponIds) => updateCheckoutCoupons(checkoutId, selectedCouponIds))
 
 ### functions
 
@@ -303,22 +346,24 @@
 - export updateAppliedCoupon(selectedCouponIds: number[]) // 동일 패턴
 - export pending // 컴포넌트가 잠금 처리에 사용
 
-## useCalculateCoupon(initialCouponIds=[], initialDiscount=0)
+## useCalculateCoupon(checkoutId, initialCouponIds=[], initialDiscount=0)
 
 > 쿠폰 모달에서 쓰임
+
+### useCouponPolicy
+
+- { maxCouponCount }
 
 ### useMyQuery()
 
 - isLoading
-- hasError
 - data: estimatedCouponDiscount
-- error
 
 #### parameter
 
-- queryKey: `/checkouts/${checkoutId}/coupons/discount-preview?${selectedCouponIds.map(id => `couponIds=${id}`).join('&')}` // selectedCouponIds가 바뀔 때마다 키가 달라져 자동 재요청
-- queryFn: getCouponDiscount
-- queryOptions: {initialData: initialDiscount}
+- queryKey: discountPreviewQueryKey(checkoutId, selectedCouponIds) // selectedCouponIds가 바뀔 때마다 키가 달라져 자동 재요청
+- queryFn: getCouponDiscount(checkoutId, selectedCouponIds)
+- queryOptions: {initialData: isDirty ? undefined : initialDiscount}
 
 ### states
 
@@ -332,7 +377,19 @@
 ### functions
 
 - toggleCouponCheckBox(id, checked)
-  - 만약 checked가 true인데 이미 selectedCouponIds.length가 MAX_COUPON_COUNT라면 return;
+  - 만약 checked가 true인데 이미 selectedCouponIds.length가 maxCouponCount라면 return;
   - id가 selectedCouponIds에 있으면서 checked false라면 selectedIds에서 제거.
   - id가 selectedCouponIds에 없으면서 checked true라면 selectedCouponIds에 추가.
   - 나머지는 return;
+
+## useShippingPolicy
+
+> CheckoutSummary, CartOrderSummary에서 쓰임.
+
+- freeShippingThreshold
+
+## useCouponPolicy
+
+> CouponModal, useCalculateCoupon에서 쓰임.
+
+- maxCouponCount

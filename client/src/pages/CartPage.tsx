@@ -42,7 +42,7 @@ export default function CartPage() {
         <Header.Title>SHOP</Header.Title>
       </Header>
       <main css={mainStyle}>
-        <h1 css={titleStyle}>장바구니</h1>
+        <h1 className="typo-xl-b">장바구니</h1>
         {isLoading && <SkeletonList />}
         {hasError && <ErrorList onRetry={refetch} />}
         {hasNoCartItem && <EmptyCartList />}
@@ -78,11 +78,6 @@ const mainStyle = css`
   flex: 1;
   min-height: 0;
   padding: 36px 24px;
-`;
-
-const titleStyle = css`
-  font-size: 24px;
-  font-weight: bold;
 `;
 
 const formStyle = css`

@@ -268,14 +268,40 @@
 
 ## useCheckout
 
-> CheckoutPage에서 쓰임. GET /checkouts/:checkoutId
-> `GET /checkouts/:checkoutId`, `PATCH /checkouts/:checkoutId/address`, `PATCH /checkouts/:checkoutId/coupons`, `DELETE /checkouts/:checkoutId` `POST /checkouts/:checkoutId/payment`
+> CheckoutPage에서 쓰임.
+> `GET /checkouts/:checkoutId`, `DELETE /checkouts/:checkoutId`, `POST /checkouts/:checkoutId/payment`
 > CheckoutData에 영향을 끼치는 애들만 모아두는 곳
 > `GET /checkouts/:checkoutId`가 SSOT. invalidate 여부의 기준은 "변경 후 같은 화면에 그 결과를 반영해야 하는가"이다.
 >
-> - PATCH(address/coupons): 204라 응답 body가 없고 같은 화면에 머물며 파생값(couponDiscount/shippingFee/totalAmount)을 다시 보여줘야 함 → invalidate 후 재요청
 > - DELETE(cancel): 페이지를 이탈하며 checkout 자체가 삭제됨. 재요청하면 404 → invalidate 불필요(오히려 위험)
 > - POST(payment): 응답 body(item_count/total_quantity/total_amount)를 navigate state로 받아 `/order-success`로 넘김. 이 checkout으로 돌아오지 않음(replace) → invalidate 불필요
+
+## useUpdateCheckout
+
+> `PATCH /checkouts/:checkoutId/address`, `PATCH /checkouts/:checkoutId/coupons`
+>
+> - PATCH(address/coupons): 204라 응답 body가 없고 같은 화면에 머물며 파생값(couponDiscount/shippingFee/totalAmount)을 다시 보여줘야 함 → invalidate 후 재요청
+> - invalidate는 `useMyMutation`이 mutation 종료 시 자동으로 수행한다. 따라서 훅에서 수동 refetch를 호출하지 않는다(이중 요청 방지).
+> - 두 PATCH는 같은 SSOT(`GET /checkouts`)를 갱신하므로 **공유 `pending` 하나로 묶는다.** 하나가 진행 중이면 배송지 체크박스와 쿠폰 적용 버튼을 **둘 다 잠근다.** (배송지 변경이 무료배송 쿠폰 할인액에 영향을 주므로 계산 전제가 흔들리는 것을 막기 위함)
+
+### states
+
+- [pending, setPending] // address/coupons가 공유. 둘 중 하나라도 진행 중이면 true.
+
+### useMyMutation(queryKey, mutationFn)
+
+> mutationFn은 apis/checkout.ts의 함수를 그대로 전달한다. (별도 래퍼 이름을 만들지 않음)
+
+- useMyMutation(checkoutQueryKey(checkoutId), updateCheckoutAddress)
+- useMyMutation(checkoutQueryKey(checkoutId), updateCheckoutCoupons)
+
+### functions
+
+> 각 함수는 공유 `pending`을 올렸다 내리며(setPending) 해당 mutate를 호출한다.
+
+- export updateRemoteArea(isRemoteArea: boolean) // setPending(true) → mutate → (자동 invalidate) → setPending(false)
+- export updateAppliedCoupon(selectedCouponIds: number[]) // 동일 패턴
+- export pending // 컴포넌트가 잠금 처리에 사용
 
 ## useCalculateCoupon(initialCouponIds=[], initialDiscount=0)
 

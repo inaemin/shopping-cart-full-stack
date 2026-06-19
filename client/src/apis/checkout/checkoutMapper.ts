@@ -1,8 +1,22 @@
-import type { CheckoutItemResponse, CouponResponse, GetCheckoutResponse } from "./checkoutSchema";
+import type {
+  CheckoutItemResponse,
+  CouponResponse,
+  CreateCheckoutRequest,
+  GetCheckoutResponse,
+} from "./checkoutSchema";
 import type { Checkout, CheckoutItem } from "../../domain/checkout";
 import type { Coupon } from "../../domain/coupon";
+import { CART_ITEM_STATUS, type CartItem } from "../../domain/cart";
 
-/** 서버 응답(GetCheckoutResponse)을 도메인 엔티티(Checkout)로 변환한다. */
+export function toCheckoutItems(
+  cartItems: CartItem[],
+  getItemSelection: (id: number) => boolean,
+): CreateCheckoutRequest["items"] {
+  return cartItems
+    .filter((item) => getItemSelection(item.id) && item.status === CART_ITEM_STATUS.AVAILABLE)
+    .map((item) => ({ product_id: item.id, quantity: item.quantity }));
+}
+
 export function toCheckout(response: GetCheckoutResponse): Checkout {
   return {
     checkoutId: response.checkout_id,

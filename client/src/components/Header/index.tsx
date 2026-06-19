@@ -18,7 +18,7 @@ function Title({ children }: HeaderTitleProps) {
 function BackButton() {
   const navigate = useNavigate();
   return (
-    <button css={iconStyle} onClick={() => navigate(-1)}>
+    <button css={iconStyle} onClick={() => navigate(-1)} aria-label="뒤로 가기">
       <ChevronLeft />
     </button>
   );

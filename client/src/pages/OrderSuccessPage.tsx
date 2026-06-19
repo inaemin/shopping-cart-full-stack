@@ -2,10 +2,9 @@ import { css } from "@emotion/react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { ROUTES } from "../constants/routes";
 import Header from "../components/Header";
-import type { PaymentSummary } from "../types/checkout";
+import type { PaymentSummary } from "../domain/checkout";
 import Button from "../components/Button";
-
-const formatPrice = (price: number) => price.toLocaleString("ko-KR") + "원";
+import { formatPrice } from "../utils/format";
 
 export default function OrderSuccessPage() {
   const location = useLocation();

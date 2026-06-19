@@ -3,7 +3,6 @@ import type { Preview } from "@storybook/react-vite";
 import { worker } from "../src/msw/browser";
 import "../src/index.css";
 
-// 데이터 패칭이 있는 스토리(예: CouponModal)를 위해 MSW 워커를 시작한다.
 const mswReady = worker.start({ onUnhandledRequest: "bypass" });
 
 const preview: Preview = {

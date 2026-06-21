@@ -10,7 +10,7 @@ interface ModalProps {
   children: ReactNode;
 }
 
-function Modal({ width = "auto", height = "auto", onDimmedClick, children }: ModalProps) {
+function Modal({ width = "100%", height = "auto", onDimmedClick, children }: ModalProps) {
   return (
     <div css={dimmedStyle} onClick={onDimmedClick}>
       <div css={[containerStyle, css({ width, height })]} onClick={(e) => e.stopPropagation()}>

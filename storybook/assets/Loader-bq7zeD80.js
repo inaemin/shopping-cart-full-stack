@@ -1,4 +1,4 @@
-import{i as e}from"./preload-helper-xPQekRTU.js";import{a as t,i as n,n as r,o as i,r as a,t as o}from"./emotion-react-jsx-runtime.browser.esm-D8sr4UXW.js";function s({size:e=6,color:t=`currentColor`}){return a(`span`,{role:`status`,"aria-label":`로딩 중`,css:l,children:[r(`span`,{css:u(e,t,0)}),r(`span`,{css:u(e,t,.15)}),r(`span`,{css:u(e,t,.3)})]})}var c,l,u,d=e((()=>{t(),o(),c=i`
+import{i as e}from"./preload-helper-xPQekRTU.js";import{a as t,i as n,n as r,o as i,r as a,t as o}from"./emotion-react-jsx-runtime.browser.esm-CDXz4srl.js";function s({size:e=6,color:t=`currentColor`}){return a(`span`,{role:`status`,"aria-label":`로딩 중`,css:l,children:[r(`span`,{css:u(e,t,0)}),r(`span`,{css:u(e,t,.15)}),r(`span`,{css:u(e,t,.3)})]})}var c,l,u,d=e((()=>{t(),o(),c=i`
   0%, 80%, 100% {
     transform: translateY(0);
     opacity: 0.4;

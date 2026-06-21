@@ -9,6 +9,7 @@ import Header from "../components/Header";
 import SkeletonList from "../components/SkeletonList";
 import { useCartList } from "../hooks/useCartList";
 import { useCartSubmit } from "../hooks/useCartSubmit";
+import { resetDemoData } from "../apis/reset/reset";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -36,10 +37,16 @@ export default function CartPage() {
     navigate(buildPath(ROUTES.CHECKOUT, { checkoutId }));
   };
 
+  const handleResetCart = async () => {
+    await resetDemoData();
+    await refetch();
+  };
+
   return (
     <div css={pageStyle}>
       <Header>
         <Header.Title>SHOP</Header.Title>
+        <Header.ResetButton onClick={handleResetCart} disabled={!hasNoCartItem} />
       </Header>
       <main css={mainStyle}>
         <h1 className="typo-xl-b">장바구니</h1>

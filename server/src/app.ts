@@ -11,6 +11,7 @@ import {
   getCouponDiscountPreview,
   payCheckout,
 } from "./controllers/checkout.controller.js";
+import { resetDemoDatabase } from "./controllers/reset.controller.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import { validateProductId, validateCartItemId, validateCheckoutId } from "./middlewares/validateId.js";
 import { notFoundHandler } from "./middlewares/notFoundHandler.js";
@@ -40,6 +41,8 @@ app.patch("/checkouts/:checkoutId/address", validateCheckoutId, updateCheckoutAd
 app.patch("/checkouts/:checkoutId/coupons", validateCheckoutId, updateCheckoutCoupons);
 app.get("/checkouts/:checkoutId/coupons/discount-preview", validateCheckoutId, getCouponDiscountPreview);
 app.post("/checkouts/:checkoutId/payment", validateCheckoutId, payCheckout);
+
+app.post("/reset", resetDemoDatabase);
 
 app.use(notFoundHandler);
 

@@ -2,6 +2,7 @@ import { css } from "@emotion/react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
 import ChevronLeft from "../../assets/chevron-left.svg?react";
+import Button from "../Button";
 
 interface HeaderProps {
   children: ReactNode;
@@ -24,12 +25,26 @@ function BackButton() {
   );
 }
 
+interface ResetButtonProps {
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+function ResetButton({ onClick, disabled = false }: ResetButtonProps) {
+  return (
+    <Button variant="secondary" onClick={onClick} disabled={disabled} fit>
+      장바구니 되돌리기
+    </Button>
+  );
+}
+
 function Header({ children }: HeaderProps) {
   return <header css={headerStyle}>{children}</header>;
 }
 
 Header.Title = Title;
 Header.BackButton = BackButton;
+Header.ResetButton = ResetButton;
 
 export default Header;
 

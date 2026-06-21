@@ -10,4 +10,5 @@ export const API_ENDPOINTS = {
   CHECKOUT_DISCOUNT_PREVIEW: (checkoutId: number, couponIds: number[]) =>
     `/checkouts/${checkoutId}/coupons/discount-preview?${couponIds.map((id) => `couponIds=${id}`).join("&")}`,
   CHECKOUT_PAYMENT: (checkoutId: number) => `/checkouts/${checkoutId}/payment`,
+  RESET: "/reset",
 } as const;

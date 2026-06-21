@@ -98,6 +98,11 @@ export const ERROR_RESPONSE = {
     message: "요청한 쿠폰을 찾을 수 없습니다.",
   },
 
+  CART_NOT_EMPTY: {
+    code: "CART_NOT_EMPTY",
+    message: "장바구니가 비어 있을 때만 초기화할 수 있습니다.",
+  },
+
   NOT_FOUND: {
     code: "NOT_FOUND",
     message: "요청한 리소스를 찾을 수 없습니다.",

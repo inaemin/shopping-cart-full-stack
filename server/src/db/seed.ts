@@ -1,4 +1,11 @@
-import { ProductModel, CartItemModel, CouponModel } from "../models/index.js";
+import {
+  ProductModel,
+  CartItemModel,
+  CouponModel,
+  CheckoutModel,
+  CheckoutItemModel,
+  CheckoutCouponModel,
+} from "../models/index.js";
 import { COUPON_CATEGORY } from "../interfaces/coupon.interface.js";
 
 const seedProducts = [
@@ -65,4 +72,20 @@ export async function seedDatabase(): Promise<void> {
   await seedIfEmpty(ProductModel, seedProducts);
   await seedIfEmpty(CartItemModel, seedCartItems);
   await seedIfEmpty(CouponModel, seedCoupons);
+}
+
+// 자식 테이블부터 비워 FK 제약을 피한다.
+async function clearAll(): Promise<void> {
+  await CheckoutCouponModel.destroy({ where: {} });
+  await CheckoutItemModel.destroy({ where: {} });
+  await CheckoutModel.destroy({ where: {} });
+  await CartItemModel.destroy({ where: {} });
+  await CouponModel.destroy({ where: {} });
+  await ProductModel.destroy({ where: {} });
+}
+
+// 데모 환경에서 진행 중 데이터를 모두 지우고 시드 상태로 되돌린다.
+export async function resetDatabase(): Promise<void> {
+  await clearAll();
+  await seedDatabase();
 }

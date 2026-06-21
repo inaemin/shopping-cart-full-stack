@@ -8,9 +8,9 @@ export interface CartItemView extends CartItem {
 }
 
 function canPurchaseCart(cartList: CartItemView[]): boolean {
-  const selectedCartItems = cartList.filter((item) => item.isSelected);
+  const selectedCartItems = cartList.filter((item) => item.isSelected && item.status === CART_ITEM_STATUS.AVAILABLE);
 
-  return selectedCartItems.length > 0 && selectedCartItems.every((item) => item.status === CART_ITEM_STATUS.AVAILABLE);
+  return selectedCartItems.length > 0;
 }
 
 export function useCartList() {

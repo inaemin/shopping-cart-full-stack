@@ -31,6 +31,7 @@ jobs:
         name: Check changed files
         uses: dorny/paths-filter@v4
         with:
+          base: ${{ github.event.before }}
           filters: |
             client:
               - 'client/**'

@@ -85,6 +85,7 @@ POST /checkouts/:checkoutId/payment -> validateCheckoutId -> payCheckout
 ### constants
 
 - MAX_COUPON_COUNT = 2
+- BTGO_MIN_QUANTITY = 3
 - FREE_SHIPPING_THRESHOLD = 100000
 - SHIPPING_FEE = 3000
 - REMOTE_AREA_FEE = 3000
@@ -108,7 +109,7 @@ POST /checkouts/:checkoutId/payment -> validateCheckoutId -> payCheckout
   - COUPON_DB에서 전체 쿠폰 목록 조회
   - PRODUCT_DB의 현재 price 기준으로 checkoutAmount 계산
   - calculateShippingFee(checkoutAmount, false)로 shippingFee 계산
-  - findBestCouponCombination(coupons, checkoutAmount, shippingFee) 호출
+  - findBestCouponCombination(coupons, { items, shippingFee, now }) 호출
     - MAX_COUPON_COUNT 이하 조합 중 coupon_discount가 가장 큰 조합 선택
     - 조건을 만족하는 쿠폰이 없으면 선택 쿠폰 없음
   - 선택된 coupon_id 목록을 CHECKOUT_COUPON_DB에 저장
@@ -156,7 +157,7 @@ POST /checkouts/:checkoutId/payment -> validateCheckoutId -> payCheckout
     - 종료
   - CHECKOUT_ITEM_DB 목록 조회
   - PRODUCT_DB의 현재 price 기준으로 checkoutAmount 재계산
-  - resolveAndValidateCoupons(dto.coupons, checkoutAmount, now) 호출
+  - getValidCoupons(dto.coupons, { checkoutAmount, items, now }) 호출
   - 기존 CHECKOUT_COUPON_DB rows 삭제
   - 선택한 coupon_id 목록을 CHECKOUT_COUPON_DB에 저장
 
@@ -167,7 +168,7 @@ POST /checkouts/:checkoutId/payment -> validateCheckoutId -> payCheckout
   - PRODUCT_DB의 현재 price 기준으로 checkoutAmount 재계산
     - sum(product.price \* item.quantity)
   - calculateShippingFee(checkoutAmount, CHECKOUT_DB.remote_area)로 shippingFee 계산
-  - couponIds가 있으면 resolveAndValidateCoupons(couponIds, checkoutAmount, now) 호출
+  - couponIds가 있으면 getValidCoupons(couponIds, { checkoutAmount, items, now }) 호출
     - MAX_COUPON_COUNT 초과면 `INVALID_COUPON_CONDITION`
     - 존재하지 않는 쿠폰이면 `COUPON_NOT_FOUND`
     - 쿠폰 조건을 만족하지 못하면 `INVALID_COUPON_CONDITION`
@@ -188,7 +189,7 @@ POST /checkouts/:checkoutId/payment -> validateCheckoutId -> payCheckout
       - CHECKOUT_COUPON_DB rows 전체 삭제
       - 최종 선택 쿠폰은 빈 배열로 처리
     - dto.coupons가 있으면
-      - resolveAndValidateCoupons(dto.coupons, checkoutAmount, now) 호출
+      - getValidCoupons(dto.coupons, { checkoutAmount, items, now }) 호출
       - dto.coupons의 coupon_id를 최종 선택값으로 보고 CHECKOUT_COUPON_DB를 replace
     - 최종 선택된 coupon_id 기준으로 coupon_discount 계산
     - 결제 요청에는 금액이 없으므로 클라이언트 금액과 비교하지 않음
@@ -211,28 +212,37 @@ POST /checkouts/:checkoutId/payment -> validateCheckoutId -> payCheckout
 
 ### functions
 
-- validateCouponCondition(coupon, checkoutAmount, now)
+- validateCouponCondition(coupon, context)
+  - context = { checkoutAmount, items, now }
   - expired_date가 지났으면 `false`
   - min_order_amount보다 checkoutAmount가 작으면 `false`
   - checkoutAmount는 쿠폰 할인 전 상품 금액 기준
   - usable_start_at/usable_end_at 범위 밖이면 `false`
+  - BTGO인데 같은 상품을 BTGO_MIN_QUANTITY(3)개 이상 담은 종류가 하나도 없으면 `false`
+    - 상품별 수량 기준이며 서로 다른 상품 수량은 합산하지 않는다
+    - 무료 증정 가능한 상품이 없으면 혜택이 0이므로 사용 불가
   - 나머지는 `true`
-- resolveAndValidateCoupons(couponIds, checkoutAmount, now)
+- getValidCoupons(couponIds, context)
+  - context = { checkoutAmount, items, now }
   - couponIds가 MAX_COUPON_COUNT보다 많으면 `INVALID_COUPON_CONDITION`
   - COUPON_DB에서 couponIds 조회
   - 존재하지 않는 쿠폰이면 `COUPON_NOT_FOUND`
   - validateCouponCondition이 false인 쿠폰이 있으면 `INVALID_COUPON_CONDITION`
   - 검증된 Coupon 목록 반환
-- calculateCouponDiscount(coupons, checkoutAmount, shippingFee)
+- calculateCouponDiscount(coupons, context)
+  - context = { items, shippingFee }
   - BTGO, FIXED, FREESHIPPING은 같은 우선순위로 선적용
-  - BTGO: 정책에 맞는 증정/할인 금액 계산
+  - BTGO: 같은 상품 3개당 1개를 그 상품 단가로 무료 처리
+    - 상품별로 floor(quantity / 3) × price 합산 (서로 다른 상품 수량은 합산하지 않음)
+    - 예: 상품 A 3개 → A 1개 무료, 상품 A 6개 → A 2개 무료
   - FIXED: amount만큼 할인
   - FREESHIPPING: shippingFee만큼 할인
     - 무료배송 조건으로 shippingFee가 0이면 FREESHIPPING 할인액도 0
   - RATE는 마지막에 적용
   - RATE: BTGO/FIXED 적용 이후 남은 상품 금액 기준으로 rate 할인
   - 총 할인 금액은 checkoutAmount + shippingFee를 넘지 않음
-- findBestCouponCombination(coupons, checkoutAmount, shippingFee)
+- findBestCouponCombination(coupons, context)
+  - context = { items, shippingFee, now }
   - 조건을 만족하는 쿠폰만 대상으로 계산
   - MAX_COUPON_COUNT 이하 모든 조합의 coupon_discount 계산
   - coupon_discount가 가장 큰 조합 반환
@@ -261,7 +271,7 @@ POST /checkouts/:checkoutId/payment -> validateCheckoutId -> payCheckout
 - findById(id)
 - updateRemoteArea(id, remoteArea)
 - deleteById(id)
-- deleteOlderThan(expiredAt)
+- findIdsOlderThan(expiredAt)
 
 ## checkoutItem.repository
 
@@ -303,7 +313,7 @@ POST /checkouts/:checkoutId/payment -> validateCheckoutId -> payCheckout
 
 - items
   - array
-  - min(1): INVALID_REQUEST_BODY
+  - minLength(1): INVALID_REQUEST_BODY
 - items[].product_id
   - number: INVALID_REQUEST_BODY
   - int: INVALID_REQUEST_BODY

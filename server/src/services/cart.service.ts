@@ -36,7 +36,7 @@ function getCartItemStatus(quantity: number, stock: number): CartItemStatus {
 function toCartItemResponse(item: CartItem, product: Product): CartItemResponse {
   const { name, price, stock, imageUrl } = product;
   const status = getCartItemStatus(item.quantity, stock);
-  return { id: item.id, name, price, quantity: item.quantity, stock, status, imageUrl };
+  return { id: item.id, name, price, quantity: item.quantity, stock, status, image_url: imageUrl };
 }
 
 async function toCartItemResponseOrEmpty(item: CartItem): Promise<CartItemResponse[]> {

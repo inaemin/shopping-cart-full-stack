@@ -41,7 +41,7 @@ describe("cart.service", () => {
           quantity: 2,
           stock: validProduct.stock,
           status: "available",
-          imageUrl: validProduct.imageUrl,
+          image_url: validProduct.imageUrl,
         },
       ]);
     });

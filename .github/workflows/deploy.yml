@@ -139,12 +139,14 @@ jobs:
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          ZEROSSL_EAB_KEY_ID: ${{ secrets.ZEROSSL_EAB_KEY_ID }}
+          ZEROSSL_EAB_MAC_KEY: ${{ secrets.ZEROSSL_EAB_MAC_KEY }}
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           port: ${{ secrets.VM_SSH_PORT || 22 }}
-          envs: GHCR_IMAGE,SERVER_IMAGE_TAG,SERVER_DEPLOY_DIR,SERVER_DOMAIN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB
+          envs: GHCR_IMAGE,SERVER_IMAGE_TAG,SERVER_DEPLOY_DIR,SERVER_DOMAIN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,ZEROSSL_EAB_KEY_ID,ZEROSSL_EAB_MAC_KEY
           script: |
             set -euo pipefail
 
@@ -157,6 +159,8 @@ jobs:
               printf 'POSTGRES_USER=%s\n' "$POSTGRES_USER"
               printf 'POSTGRES_PASSWORD=%s\n' "$POSTGRES_PASSWORD"
               printf 'POSTGRES_DB=%s\n' "$POSTGRES_DB"
+              printf 'ZEROSSL_EAB_KEY_ID=%s\n' "$ZEROSSL_EAB_KEY_ID"
+              printf 'ZEROSSL_EAB_MAC_KEY=%s\n' "$ZEROSSL_EAB_MAC_KEY"
             } > .env
 
             docker compose pull

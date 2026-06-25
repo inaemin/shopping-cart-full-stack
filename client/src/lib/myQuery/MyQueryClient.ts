@@ -57,11 +57,11 @@ export class MyQueryClient {
 
     try {
       const data = await queryRecord.queryFn();
-      if (queryRecord.fetchSeq !== seq) return data as T; // 늦은 응답 → 폐기
+      if (queryRecord.fetchSeq !== seq) return null; // 늦은 응답 → 폐기
       this.setQueryData(queryKey, data);
       return data as T;
     } catch (error) {
-      if (queryRecord.fetchSeq !== seq) throw error; // 늦은 에러 → 폐기
+      if (queryRecord.fetchSeq !== seq) return null; // 늦은 에러 → 폐기
       this.setQueryState(queryKey, {
         status: "error",
         error,

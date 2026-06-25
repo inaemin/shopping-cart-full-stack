@@ -61,11 +61,6 @@ export default function CheckoutPage() {
     setCouponModalOpened(false);
   };
 
-  const handleApplyCoupon = async (selectedCouponIds: number[]) => {
-    await updateAppliedCoupon(selectedCouponIds);
-    handleCloseModal();
-  };
-
   const handleSubmitCheckout = async () => {
     const summary = await submitCheckout();
     isSuccessfullyPaidRef.current = true;
@@ -122,7 +117,7 @@ export default function CheckoutPage() {
                 checkoutId={checkoutId}
                 couponList={couponList}
                 initialCouponDiscount={couponDiscount}
-                onApplyCoupon={handleApplyCoupon}
+                onApplyCoupon={updateAppliedCoupon}
                 onClose={handleCloseModal}
               />
             )}

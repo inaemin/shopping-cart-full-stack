@@ -58,7 +58,7 @@ const meta = {
     checkoutId: 1,
     couponList,
     initialCouponDiscount: 5000,
-    onApplyCoupon: () => undefined,
+    onApplyCoupon: async () => {},
     onClose: () => undefined,
   },
   decorators: [

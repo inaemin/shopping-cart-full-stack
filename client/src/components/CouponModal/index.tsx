@@ -13,7 +13,7 @@ interface CouponModalProps {
   checkoutId: number;
   couponList: Coupon[];
   initialCouponDiscount: number;
-  onApplyCoupon: (selectedCouponIds: number[]) => void;
+  onApplyCoupon: (selectedCouponIds: number[]) => Promise<void>;
   onClose: () => void;
 }
 
@@ -40,9 +40,13 @@ export default function CouponModal({
     return !selectedCouponIds.includes(coupon.id) && selectedCouponIds.length >= maxCouponCount;
   };
 
-  const handleApplyCoupon = () => {
-    onApplyCoupon(selectedCouponIds);
-    onClose();
+  const handleApplyCoupon = async () => {
+    try {
+      await onApplyCoupon(selectedCouponIds);
+      onClose();
+    } catch {
+      // 닫지 않는다. 갱신된 couponList가 props로 다시 흘러들어와 재렌더된다.
+    }
   };
 
   return (

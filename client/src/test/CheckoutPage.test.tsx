@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, it, expect, vi } from "vitest";
@@ -451,6 +451,76 @@ describe("쿠폰", () => {
     // 최신 값(10,000원)이 유지되고, 옛 값(0원)으로 덮이지 않아야 한다.
     await expect(within(modal).findByText(/총 0원 할인 쿠폰 사용하기/, {}, { timeout: 200 })).rejects.toThrow();
     expect(within(modal).getByText(/총 10,000원 할인 쿠폰 사용하기/)).toBeInTheDocument();
+  });
+
+  it("사용 시간이 지난 쿠폰을 적용하면 적용이 실패하고, 모달이 닫히지 않은 채 해당 쿠폰이 비활성으로 다시 표시된다", async () => {
+    const user = userEvent.setup();
+
+    // 시나리오: 미라클모닝 쿠폰(사용 가능 04:00~07:00)을 06:59에 선택(미리보기는 성공)했다가,
+    // 07:01에 '사용하기'를 누른다. 시간이 지나 서버가 적용을 거절(409)하는 상황을 흉내낸다.
+    // PATCH /coupons만 실패시키고, 미리보기(discount-preview)는 정상 응답하게 둔다.
+    //
+    // checkout GET은 호출 시점으로 시간을 가른다.
+    //  - 첫 조회(모달 진입, 06:59): 미라클모닝 쿠폰 선택 가능(disabled:false)
+    //  - 적용 실패 후 재조회(07:01): 사용 시간이 지나 disabled:true
+    let checkoutFetchCount = 0;
+    const buildCheckout = (miracleDisabled: boolean) => ({
+      checkout_id: 1,
+      items: [{ product_id: 1, name: "상품 A", price: 110000, quantity: 1, image_url: "x" }],
+      coupons: [
+        { coupon_id: 1, name: "5,000원 할인 쿠폰", is_selected: true, disabled: false },
+        {
+          coupon_id: 4,
+          name: "미라클모닝 30% 할인 쿠폰",
+          usable_start_at: "04:00",
+          usable_end_at: "07:00",
+          is_selected: false,
+          disabled: miracleDisabled,
+        },
+      ],
+      remote_area: false,
+      checkout_amount: 110000,
+      coupon_discount: 5000,
+      shipping_fee: 0,
+      total_amount: 105000,
+    });
+
+    server.use(
+      http.patch(`${BASE_URL}/checkouts/:checkoutId/coupons`, () =>
+        HttpResponse.json(
+          { error: "COUPON_NOT_USABLE", message: "사용 가능 시간이 지난 쿠폰입니다." },
+          { status: 409 },
+        ),
+      ),
+      http.get(`${BASE_URL}/checkouts/:checkoutId`, () => {
+        checkoutFetchCount += 1;
+        return HttpResponse.json(buildCheckout(checkoutFetchCount > 1));
+      }),
+      http.get(`${BASE_URL}/checkouts/:checkoutId/coupons/discount-preview`, () =>
+        HttpResponse.json({ coupon_discount: 33000 }),
+      ),
+    );
+
+    renderCheckoutPage();
+    await screen.findByText("상품 A");
+    await openCouponModal(user);
+    await screen.findByText("쿠폰을 선택해 주세요");
+
+    // 06:59 시점: 미라클모닝 쿠폰 선택(미리보기 성공). 시드 5,000원 + 미라클모닝 = 2개로 정책 내.
+    await clickCoupon(user, "미라클모닝 30% 할인 쿠폰");
+    expect(getCouponCheckbox("미라클모닝 30% 할인 쿠폰")).toBeChecked();
+
+    // 07:01 시점: '사용하기' → PATCH 409 실패 → invalidate → checkout 재조회
+    await user.click(within(getCouponModal()).getByRole("button", { name: /사용하기/ }));
+
+    // 모달은 닫히지 않고 그대로 열려 있어야 한다.
+    expect(screen.getByText("쿠폰을 선택해 주세요")).toBeInTheDocument();
+
+    // 갱신된 목록이 반영되어 미라클모닝 쿠폰이 비활성(aria-disabled)으로 다시 표시된다.
+    await waitFor(() => {
+      const miracleRow = within(getCouponModal()).getByText("미라클모닝 30% 할인 쿠폰").closest("[aria-disabled]")!;
+      expect(miracleRow).toHaveAttribute("aria-disabled", "true");
+    });
   });
 });
 
